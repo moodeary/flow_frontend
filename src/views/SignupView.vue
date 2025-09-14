@@ -220,13 +220,11 @@ const handleSignup = async () => {
 }
 
 const handleGoogleSignup = () => {
-  // Google OAuth 연동 구현 예정
-  console.log('Google signup clicked')
+  // TODO: Google OAuth 연동 구현 예정
 }
 
 const handleAppleSignup = () => {
-  // Apple OAuth 연동 구현 예정
-  console.log('Apple signup clicked')
+  // TODO: Apple OAuth 연동 구현 예정
 }
 </script>
 

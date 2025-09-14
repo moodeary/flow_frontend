@@ -290,24 +290,6 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
-      <div class="modal small" @click.stop>
-        <div class="modal-header">
-          <h2>삭제 확인</h2>
-        </div>
-        <div class="modal-body">
-          <p>"{{ itemToDelete?.name }}" 아이템을 삭제하시겠습니까?</p>
-          <p class="warning">이 작업은 되돌릴 수 없습니다.</p>
-        </div>
-        <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn-cancel">취소</button>
-          <button @click="confirmDelete" :disabled="isSubmitting" class="btn-delete-confirm">
-            {{ isSubmitting ? '삭제 중...' : '삭제' }}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -331,8 +313,6 @@ const itemsPerPage = ref(12)
 // Modals
 const showAddModal = ref(false)
 const showEditModal = ref(false)
-const showDeleteModal = ref(false)
-const itemToDelete = ref(null)
 const isSubmitting = ref(false)
 
 // Form
@@ -509,7 +489,7 @@ const toggleSortOrder = () => {
 }
 
 const viewItem = (item) => {
-  console.log('View item:', item)
+  // TODO: 아이템 상세 보기 모달 구현
 }
 
 const editItem = (item) => {

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Read(//d/source/Inventory/**)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(pnpm test:unit:*)"
     ],
     "deny": [],
     "ask": []
