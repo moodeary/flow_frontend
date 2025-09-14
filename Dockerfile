@@ -1,5 +1,5 @@
 # Vue.js 애플리케이션 빌드
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 # Enable pnpm
 ENV PNPM_HOME="/pnpm"
