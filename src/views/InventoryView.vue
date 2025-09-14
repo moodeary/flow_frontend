@@ -33,10 +33,11 @@
 
         <select v-model="selectedStatus" @change="applyFilters" class="filter-select">
           <option value="">모든 상태</option>
-          <option value="AVAILABLE">사용가능</option>
-          <option value="OUT_OF_STOCK">품절</option>
-          <option value="RESERVED">예약됨</option>
-          <option value="DAMAGED">손상</option>
+          <option value="EXCELLENT">최상</option>
+          <option value="GOOD">양호</option>
+          <option value="FAIR">보통</option>
+          <option value="POOR">불량</option>
+          <option value="BROKEN">고장</option>
         </select>
 
         <button @click="resetFilters" class="reset-filters-btn">필터 초기화</button>
@@ -99,6 +100,12 @@
         <div class="item-meta">
           <span class="item-category">{{ getCategoryName(item.category) }}</span>
           <span class="item-quantity">수량: {{ item.quantity }}</span>
+          <span v-if="item.location" class="item-location">📍 {{ item.location }}</span>
+        </div>
+
+        <div v-if="item.purchasePrice || item.currentValue" class="item-price">
+          <span v-if="item.purchasePrice" class="purchase-price">구매: ₩{{ item.purchasePrice.toLocaleString() }}</span>
+          <span v-if="item.currentValue" class="current-value">현재: ₩{{ item.currentValue.toLocaleString() }}</span>
         </div>
 
         <div class="item-footer">
@@ -170,6 +177,7 @@
               v-model="itemForm.name"
               type="text"
               required
+              maxlength="100"
               placeholder="아이템 이름을 입력하세요"
             />
           </div>
@@ -180,6 +188,7 @@
               id="description"
               v-model="itemForm.description"
               rows="3"
+              maxlength="500"
               placeholder="아이템 설명을 입력하세요"
             ></textarea>
           </div>
@@ -204,7 +213,7 @@
                 id="quantity"
                 v-model.number="itemForm.quantity"
                 type="number"
-                min="0"
+                min="1"
                 required
                 placeholder="수량"
               />
@@ -215,11 +224,60 @@
             <label for="status">상태 *</label>
             <select id="status" v-model="itemForm.status" required>
               <option value="">상태 선택</option>
-              <option value="AVAILABLE">사용가능</option>
-              <option value="OUT_OF_STOCK">품절</option>
-              <option value="RESERVED">예약됨</option>
-              <option value="DAMAGED">손상</option>
+              <option value="EXCELLENT">최상</option>
+              <option value="GOOD">양호</option>
+              <option value="FAIR">보통</option>
+              <option value="POOR">불량</option>
+              <option value="BROKEN">고장</option>
             </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="purchasePrice">구매가격</label>
+              <input
+                id="purchasePrice"
+                v-model.number="itemForm.purchasePrice"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="구매가격"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="currentValue">현재가치</label>
+              <input
+                id="currentValue"
+                v-model.number="itemForm.currentValue"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="현재가치"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="location">위치</label>
+            <input
+              id="location"
+              v-model="itemForm.location"
+              type="text"
+              maxlength="100"
+              placeholder="보관 위치"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="imageUrl">이미지 URL</label>
+            <input
+              id="imageUrl"
+              v-model="itemForm.imageUrl"
+              type="url"
+              maxlength="255"
+              placeholder="이미지 URL (선택사항)"
+            />
           </div>
 
           <div class="modal-actions">
@@ -281,8 +339,12 @@ const itemForm = reactive({
   name: '',
   description: '',
   category: '',
-  quantity: 0,
-  status: ''
+  quantity: 1,
+  status: '',
+  purchasePrice: null,
+  currentValue: null,
+  location: '',
+  imageUrl: ''
 })
 
 // Computed
@@ -390,20 +452,22 @@ const getCategoryName = (category) => {
 
 const getStatusName = (status) => {
   const statusMap = {
-    AVAILABLE: '사용가능',
-    OUT_OF_STOCK: '품절',
-    RESERVED: '예약됨',
-    DAMAGED: '손상'
+    EXCELLENT: '최상',
+    GOOD: '양호',
+    FAIR: '보통',
+    POOR: '불량',
+    BROKEN: '고장'
   }
   return statusMap[status] || status
 }
 
 const getStatusClass = (status) => {
   return {
-    'status-available': status === 'AVAILABLE',
-    'status-out-of-stock': status === 'OUT_OF_STOCK',
-    'status-reserved': status === 'RESERVED',
-    'status-damaged': status === 'DAMAGED'
+    'status-excellent': status === 'EXCELLENT',
+    'status-good': status === 'GOOD',
+    'status-fair': status === 'FAIR',
+    'status-poor': status === 'POOR',
+    'status-broken': status === 'BROKEN'
   }
 }
 
@@ -453,6 +517,10 @@ const editItem = (item) => {
   itemForm.category = item.category
   itemForm.quantity = item.quantity
   itemForm.status = item.status
+  itemForm.purchasePrice = item.purchasePrice || null
+  itemForm.currentValue = item.currentValue || null
+  itemForm.location = item.location || ''
+  itemForm.imageUrl = item.imageUrl || ''
   showEditModal.value = true
 }
 
@@ -466,8 +534,12 @@ const resetForm = () => {
   itemForm.name = ''
   itemForm.description = ''
   itemForm.category = ''
-  itemForm.quantity = 0
+  itemForm.quantity = 1
   itemForm.status = ''
+  itemForm.purchasePrice = null
+  itemForm.currentValue = null
+  itemForm.location = ''
+  itemForm.imageUrl = ''
 }
 
 const closeModals = () => {
@@ -479,26 +551,27 @@ const closeModals = () => {
 const saveItem = async () => {
   isSubmitting.value = true
   try {
+    const itemData = {
+      name: itemForm.name,
+      description: itemForm.description || null,
+      category: itemForm.category,
+      quantity: itemForm.quantity,
+      status: itemForm.status,
+      purchasePrice: itemForm.purchasePrice || null,
+      currentValue: itemForm.currentValue || null,
+      location: itemForm.location || null,
+      imageUrl: itemForm.imageUrl || null
+    }
+
     if (showAddModal.value) {
-      await inventoryStore.createItem({
-        name: itemForm.name,
-        description: itemForm.description,
-        category: itemForm.category,
-        quantity: itemForm.quantity,
-        status: itemForm.status
-      })
+      await inventoryStore.createItem(itemData)
     } else {
-      await inventoryStore.updateItem(itemForm.id, {
-        name: itemForm.name,
-        description: itemForm.description,
-        category: itemForm.category,
-        quantity: itemForm.quantity,
-        status: itemForm.status
-      })
+      await inventoryStore.updateItem(itemForm.id, itemData)
     }
     closeModals()
   } catch (error) {
     console.error('Save item error:', error)
+    alert('아이템 저장 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'))
   } finally {
     isSubmitting.value = false
   }
@@ -774,8 +847,9 @@ onMounted(async () => {
 
 .item-meta {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
   font-size: 12px;
 }
 
@@ -792,6 +866,32 @@ onMounted(async () => {
   font-weight: 500;
 }
 
+.item-location {
+  color: #666;
+  font-size: 11px;
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.item-price {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.purchase-price {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.current-value {
+  color: #28a745;
+  font-weight: 500;
+}
+
 .item-footer {
   display: flex;
   justify-content: space-between;
@@ -805,22 +905,27 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.status-available {
+.status-excellent {
   background-color: #d1ecf1;
   color: #0c5460;
 }
 
-.status-out-of-stock {
-  background-color: #f8d7da;
-  color: #721c24;
+.status-good {
+  background-color: #d4edda;
+  color: #155724;
 }
 
-.status-reserved {
+.status-fair {
   background-color: #fff3cd;
   color: #856404;
 }
 
-.status-damaged {
+.status-poor {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-broken {
   background-color: #f5c6cb;
   color: #721c24;
 }

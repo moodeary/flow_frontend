@@ -72,7 +72,7 @@ onMounted(() => {
       <div class="footer-container">
         <div class="footer-content">
           <div class="footer-info">
-            <span>© 2024 Inventory Manager. All rights reserved.</span>
+            <span>© 2025 Inventory Manager. All rights reserved.</span>
           </div>
           <div class="footer-links">
             <a href="#" class="footer-link">도움말</a>
@@ -97,7 +97,12 @@ onMounted(() => {
 
 /* Header Styles */
 .app-header {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95) 0%, rgba(75, 85, 99, 0.95) 50%, rgba(31, 41, 55, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(55, 65, 81, 0.95) 0%,
+    rgba(75, 85, 99, 0.95) 50%,
+    rgba(31, 41, 55, 0.95) 100%
+  );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   color: white;
@@ -305,7 +310,12 @@ onMounted(() => {
 
 /* Footer */
 .app-footer {
-  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(55, 65, 81, 0.95) 50%, rgba(75, 85, 99, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(31, 41, 55, 0.95) 0%,
+    rgba(55, 65, 81, 0.95) 50%,
+    rgba(75, 85, 99, 0.95) 100%
+  );
   color: rgba(255, 255, 255, 0.7);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);

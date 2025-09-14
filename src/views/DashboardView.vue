@@ -136,27 +136,29 @@ const getCategoryName = (category) => {
 
 const getStatusName = (status) => {
   const statusMap = {
-    AVAILABLE: '사용가능',
-    OUT_OF_STOCK: '품절',
-    RESERVED: '예약됨',
-    DAMAGED: '손상'
+    EXCELLENT: '최상',
+    GOOD: '양호',
+    FAIR: '보통',
+    POOR: '불량',
+    BROKEN: '고장'
   }
   return statusMap[status] || status
 }
 
 const getStatusClass = (status) => {
   return {
-    'status-available': status === 'AVAILABLE',
-    'status-out-of-stock': status === 'OUT_OF_STOCK',
-    'status-reserved': status === 'RESERVED',
-    'status-damaged': status === 'DAMAGED'
+    'status-excellent': status === 'EXCELLENT',
+    'status-good': status === 'GOOD',
+    'status-fair': status === 'FAIR',
+    'status-poor': status === 'POOR',
+    'status-broken': status === 'BROKEN'
   }
 }
 
 const calculateStats = () => {
   const items = inventoryStore.items
   stats.value.totalItems = items.length
-  stats.value.availableItems = items.filter(item => item.status === 'AVAILABLE').length
+  stats.value.availableItems = items.filter(item => ['EXCELLENT', 'GOOD', 'FAIR'].includes(item.status)).length
   stats.value.lowStockItems = items.filter(item => item.quantity < 10).length
   stats.value.categories = new Set(items.map(item => item.category)).size
 }
@@ -401,22 +403,27 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.status-available {
+.status-excellent {
   background-color: #d1ecf1;
   color: #0c5460;
 }
 
-.status-out-of-stock {
-  background-color: #f8d7da;
-  color: #721c24;
+.status-good {
+  background-color: #d4edda;
+  color: #155724;
 }
 
-.status-reserved {
+.status-fair {
   background-color: #fff3cd;
   color: #856404;
 }
 
-.status-damaged {
+.status-poor {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-broken {
   background-color: #f5c6cb;
   color: #721c24;
 }
