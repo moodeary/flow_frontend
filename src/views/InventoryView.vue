@@ -314,8 +314,10 @@
 <script setup>
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useInventoryStore } from '@/stores/inventory'
+import { useModal } from '@/composables/useModal'
 
 const inventoryStore = useInventoryStore()
+const { confirm, handleApiSuccess, handleApiError, deleteConfirm } = useModal()
 
 // State
 const searchQuery = ref('')
@@ -524,9 +526,21 @@ const editItem = (item) => {
   showEditModal.value = true
 }
 
-const deleteItem = (item) => {
-  itemToDelete.value = item
-  showDeleteModal.value = true
+const deleteItem = async (item) => {
+  try {
+    await deleteConfirm(item.name)
+  } catch {
+    return // 사용자가 취소한 경우
+  }
+
+  // 삭제 실행
+  try {
+    await inventoryStore.deleteItem(item.id)
+    await handleApiSuccess('아이템이 성공적으로 삭제되었습니다!')
+  } catch (error) {
+    console.error('Delete item error:', error)
+    await handleApiError(error)
+  }
 }
 
 const resetForm = () => {
@@ -549,6 +563,19 @@ const closeModals = () => {
 }
 
 const saveItem = async () => {
+  // 저장 전 확인
+  const action = showAddModal.value ? '추가' : '수정'
+  try {
+    await confirm({
+      title: `아이템 ${action} 확인`,
+      message: `아이템명: ${itemForm.name}\n카테고리: ${getCategoryName(itemForm.category)}\n\n아이템을 ${action}하시겠습니까?`,
+      confirmText: action,
+      cancelText: '취소'
+    })
+  } catch {
+    return // 사용자가 취소한 경우
+  }
+
   isSubmitting.value = true
   try {
     const itemData = {
@@ -565,30 +592,20 @@ const saveItem = async () => {
 
     if (showAddModal.value) {
       await inventoryStore.createItem(itemData)
+      await handleApiSuccess('아이템이 성공적으로 추가되었습니다!')
     } else {
       await inventoryStore.updateItem(itemForm.id, itemData)
+      await handleApiSuccess('아이템이 성공적으로 수정되었습니다!')
     }
     closeModals()
   } catch (error) {
     console.error('Save item error:', error)
-    alert('아이템 저장 중 오류가 발생했습니다: ' + (error.message || '알 수 없는 오류'))
+    await handleApiError(error)
   } finally {
     isSubmitting.value = false
   }
 }
 
-const confirmDelete = async () => {
-  isSubmitting.value = true
-  try {
-    await inventoryStore.deleteItem(itemToDelete.value.id)
-    showDeleteModal.value = false
-    itemToDelete.value = null
-  } catch (error) {
-    console.error('Delete item error:', error)
-  } finally {
-    isSubmitting.value = false
-  }
-}
 
 // Watch for page changes
 watch(filteredItems, () => {

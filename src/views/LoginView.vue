@@ -56,9 +56,11 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useModal } from '@/composables/useModal'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { confirm, handleApiSuccess, handleApiError } = useModal()
 
 const form = reactive({
   email: '',
@@ -71,17 +73,32 @@ const errorMessage = ref('')
 const handleLogin = async () => {
   if (!form.email || !form.password) return
 
+  // 로그인 전 확인
+  try {
+    await confirm({
+      title: '로그인 확인',
+      message: '입력하신 정보로 로그인하시겠습니까?',
+      confirmText: '로그인',
+      cancelText: '취소'
+    })
+  } catch {
+    return // 사용자가 취소한 경우
+  }
+
   isLoading.value = true
   errorMessage.value = ''
 
   try {
-    await authStore.login({
+    const response = await authStore.login({
       email: form.email,
       password: form.password
     })
 
-    router.push('/dashboard')
+    await handleApiSuccess('로그인에 성공했습니다!', () => {
+      router.push('/dashboard')
+    })
   } catch (error) {
+    await handleApiError(error)
     errorMessage.value = error.message || '로그인에 실패했습니다'
   } finally {
     isLoading.value = false

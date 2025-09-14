@@ -130,9 +130,11 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useModal } from '@/composables/useModal'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { confirm, handleApiSuccess, handleApiError } = useModal()
 
 const form = reactive({
   email: '',
@@ -174,6 +176,18 @@ const handleSignup = async () => {
     return
   }
 
+  // 회원가입 전 확인
+  try {
+    await confirm({
+      title: '회원가입 확인',
+      message: `이메일: ${form.email}\n닉네임: ${form.nickname}\n\n위 정보로 회원가입하시겠습니까?`,
+      confirmText: '회원가입',
+      cancelText: '취소'
+    })
+  } catch {
+    return // 사용자가 취소한 경우
+  }
+
   isLoading.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -188,16 +202,17 @@ const handleSignup = async () => {
     const response = await authStore.signup(signupData)
 
     if (response.success) {
-      successMessage.value = '회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.'
-
-      // 3초 후 로그인 페이지로 이동
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+      await handleApiSuccess('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.', () => {
+        setTimeout(() => {
+          router.push('/login')
+        }, 1000)
+      })
     } else {
+      await handleApiError({ message: response.message || '회원가입에 실패했습니다' })
       errorMessage.value = response.message || '회원가입에 실패했습니다'
     }
   } catch (error) {
+    await handleApiError(error)
     errorMessage.value = error.message || '회원가입에 실패했습니다'
   } finally {
     isLoading.value = false

@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { inventoryAPI } from '../api/inventory.js'
+import { inventoryAPI } from '@/api/inventory.js'
 
 export const useInventoryStore = defineStore('inventory', () => {
   const items = ref([])

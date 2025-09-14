@@ -1,4 +1,4 @@
-import apiClient from './client.js'
+import apiClient from '@/api/client.js'
 
 export const authAPI = {
   async login(credentials) {

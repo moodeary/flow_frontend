@@ -15,37 +15,36 @@
             :aria-labelledby="titleId"
             :aria-describedby="messageId"
           >
-            <div class="modal-header">
+            <div class="modal-content">
               <h3 :id="titleId" class="modal-title">
                 {{ title }}
               </h3>
-            </div>
 
-            <div class="modal-body">
               <p :id="messageId" class="modal-message">
                 {{ message }}
               </p>
-            </div>
 
-            <div class="modal-actions">
-              <button
-                v-if="!hideCancel"
-                type="button"
-                class="btn btn-secondary"
-                @click="handleCancel"
-              >
-                {{ cancelText }}
-              </button>
-              <button
-                type="button"
-                class="btn"
-                :class="confirmButtonClass"
-                @click="handleConfirm"
-                :disabled="isLoading"
-              >
-                <span v-if="isLoading" class="loading-spinner"></span>
-                {{ confirmText }}
-              </button>
+              <div class="modal-actions">
+                <button
+                  v-if="!hideCancel"
+                  type="button"
+                  class="btn btn-cancel"
+                  @click="handleCancel"
+                  :disabled="isLoading"
+                >
+                  {{ cancelText }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-confirm"
+                  :class="{ 'btn-danger': variant === 'danger' }"
+                  @click="handleConfirm"
+                  :disabled="isLoading"
+                >
+                  <span v-if="isLoading" class="loading-spinner"></span>
+                  <span v-else>{{ confirmText }}</span>
+                </button>
+              </div>
             </div>
           </div>
         </Transition>
@@ -102,16 +101,6 @@ const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
 const titleId = ref(`modal-title-${Math.random().toString(36).substr(2, 9)}`)
 const messageId = ref(`modal-message-${Math.random().toString(36).substr(2, 9)}`)
 
-const confirmButtonClass = computed(() => {
-  switch (props.variant) {
-    case 'danger':
-      return 'btn-danger'
-    case 'success':
-      return 'btn-success'
-    default:
-      return 'btn-primary'
-  }
-})
 
 const handleConfirm = () => {
   emit('confirm')
@@ -146,122 +135,139 @@ watch(() => props.modelValue, (isOpen) => {
 </script>
 
 <style scoped>
+/* Backdrop */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal-backdrop);
+  z-index: 9999;
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
+/* Modal Container - 메인 타이틀과 같은 그라데이션 스타일 */
 .modal-container {
-  background-color: var(--color-background-secondary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
+  background: linear-gradient(
+    135deg,
+    rgba(55, 65, 81, 0.95) 0%,
+    rgba(75, 85, 99, 0.95) 50%,
+    rgba(31, 41, 55, 0.95) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 400px;
-  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
-.modal-header {
-  padding: var(--spacing-lg) var(--spacing-lg) 0;
+/* Content */
+.modal-content {
+  padding: 32px 32px 24px;
 }
 
 .modal-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-foreground);
-  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
   text-align: center;
-}
-
-.modal-body {
-  padding: var(--spacing-md) var(--spacing-lg);
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.5px;
 }
 
 .modal-message {
-  font-size: var(--font-size-base);
-  color: var(--color-foreground-secondary);
-  margin: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 32px 0;
   text-align: center;
   line-height: 1.5;
+  white-space: pre-line;
 }
 
+/* Actions */
 .modal-actions {
   display: flex;
-  gap: var(--spacing-sm);
-  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  gap: 12px;
 }
 
 .btn {
   flex: 1;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 12px 24px;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
+  gap: 8px;
   min-height: 44px;
 }
 
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none !important;
 }
 
-.btn-secondary {
-  background-color: var(--color-background-tertiary);
-  color: var(--color-foreground-secondary);
-  border: 1px solid var(--color-border);
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-border);
+.btn:not(:disabled):active {
+  transform: scale(0.98);
 }
 
-.btn-primary {
-  background-color: var(--color-accent);
+/* Cancel Button - 투명한 회색 */
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-accent-hover);
+/* Confirm Button - 메인과 같은 그라데이션 */
+.btn-confirm {
+  background: linear-gradient(135deg, #6b7280, #9ca3af, #4b5563);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary:active:not(:disabled) {
-  background-color: var(--color-accent-pressed);
+.btn-confirm:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4b5563, #6b7280, #374151);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Danger Button - 빨간색 그라데이션 */
 .btn-danger {
-  background-color: var(--color-error);
-  color: white;
+  background: linear-gradient(135deg, #dc2626, #ef4444, #b91c1c) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3) !important;
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #e63946;
+  background: linear-gradient(135deg, #b91c1c, #dc2626, #991b1b) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
 }
 
-.btn-success {
-  background-color: var(--color-success);
-  color: white;
-}
-
-.btn-success:hover:not(:disabled) {
-  background-color: #28a745;
-}
-
+/* Loading Spinner */
 .loading-spinner {
   width: 16px;
   height: 16px;
@@ -279,11 +285,11 @@ watch(() => props.modelValue, (isOpen) => {
 
 /* Transitions */
 .modal-backdrop-enter-active {
-  transition: opacity var(--transition-base);
+  transition: all 0.2s ease;
 }
 
 .modal-backdrop-leave-active {
-  transition: opacity var(--transition-base);
+  transition: all 0.15s ease;
 }
 
 .modal-backdrop-enter-from,
@@ -292,16 +298,51 @@ watch(() => props.modelValue, (isOpen) => {
 }
 
 .modal-enter-active {
-  transition: all var(--transition-base);
+  transition: all 0.2s ease;
 }
 
 .modal-leave-active {
-  transition: all var(--transition-base);
+  transition: all 0.15s ease;
 }
 
-.modal-enter-from,
-.modal-leave-to {
+.modal-enter-from {
   opacity: 0;
   transform: scale(0.9) translateY(-10px);
+}
+
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(5px);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .modal-container {
+    max-width: 90%;
+    margin: 0 20px;
+  }
+
+  .modal-content {
+    padding: 24px 24px 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-message {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
 }
 </style>
