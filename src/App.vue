@@ -97,7 +97,7 @@ onMounted(() => {
 
 /* Header Styles */
 .app-header {
-  background: rgba(0, 0, 0, 0.9);
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95) 0%, rgba(75, 85, 99, 0.95) 50%, rgba(31, 41, 55, 0.95) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   color: white;
@@ -105,6 +105,8 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .header-container {
@@ -166,14 +168,15 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #333, #666);
+  background: linear-gradient(135deg, #6b7280, #9ca3af, #4b5563);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   font-size: 16px;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .user-details {
@@ -239,6 +242,7 @@ onMounted(() => {
   position: sticky;
   top: 70px;
   z-index: 999;
+  flex-shrink: 0;
 }
 
 .tab-container {
@@ -269,9 +273,9 @@ onMounted(() => {
 }
 
 .tab-item.router-link-active {
-  color: #000;
-  border-bottom-color: #000;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent);
+  color: #374151;
+  border-bottom-color: #6b7280;
+  background: linear-gradient(to bottom, rgba(107, 114, 128, 0.08), transparent);
 }
 
 .tab-icon {
@@ -296,15 +300,16 @@ onMounted(() => {
 .app-main {
   flex: 1;
   background-color: #ffffff;
-  min-height: calc(100vh - 70px - 60px - 80px); /* header - tabs - footer */
+  overflow-y: auto;
 }
 
 /* Footer */
 .app-footer {
-  background: rgba(0, 0, 0, 0.9);
-  color: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(55, 65, 81, 0.95) 50%, rgba(75, 85, 99, 0.95) 100%);
+  color: rgba(255, 255, 255, 0.7);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .footer-container {
@@ -322,7 +327,7 @@ onMounted(() => {
 
 .footer-info span {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .footer-links {
@@ -331,14 +336,14 @@ onMounted(() => {
 }
 
 .footer-link {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   font-size: 14px;
   transition: color 0.3s ease;
 }
 
 .footer-link:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Responsive Design */
@@ -404,7 +409,7 @@ onMounted(() => {
   }
 
   .app-main {
-    min-height: calc(100vh - 60px - 56px - 80px);
+    flex: 1;
   }
 }
 

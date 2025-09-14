@@ -354,7 +354,7 @@ const handleAppleSignup = () => {
 }
 
 .checkbox-text a {
-  color: #000;
+  color: #374151;
   text-decoration: none;
   font-weight: 600;
 }
@@ -382,7 +382,7 @@ const handleAppleSignup = () => {
 }
 
 .signup-button {
-  background-color: #000;
+  background: linear-gradient(135deg, #4b5563, #6b7280, #374151);
   color: white;
   border: none;
   padding: 16px 24px;
@@ -392,11 +392,13 @@ const handleAppleSignup = () => {
   cursor: pointer;
   transition: all 0.3s ease;
   letter-spacing: -0.2px;
+  box-shadow: 0 4px 12px rgba(75, 85, 99, 0.3);
 }
 
 .signup-button:hover:not(:disabled) {
-  background-color: #333;
+  background: linear-gradient(135deg, #374151, #4b5563, #1f2937);
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(75, 85, 99, 0.4);
 }
 
 .signup-button:disabled {
@@ -417,7 +419,7 @@ const handleAppleSignup = () => {
 }
 
 .login-link a {
-  color: #000;
+  color: #374151;
   text-decoration: none;
   font-weight: 600;
 }
