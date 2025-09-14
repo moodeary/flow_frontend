@@ -7,35 +7,31 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      redirect: '/dashboard'
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('../views/LoginView.vue'),
-      meta: { requiresGuest: true }
+      redirect: '/dashboard',
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+      meta: { requiresGuest: true },
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('../views/SignupView.vue'),
+      meta: { requiresGuest: true },
     },
     {
       path: '/inventory',
       name: 'inventory',
       component: () => import('../views/InventoryView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
-    },
-    {
-      path: '/demo',
-      name: 'demo',
-      component: () => import('../views/DemoView.vue'),
+      meta: { requiresAuth: true },
     },
   ],
 })

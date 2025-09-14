@@ -95,17 +95,18 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 20px;
 }
 
 .login-container {
   background: white;
   padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .login-header {
@@ -114,9 +115,11 @@ const handleLogin = async () => {
 }
 
 .login-header h1 {
-  font-size: 24px;
+  font-size: 28px;
+  font-weight: 700;
   margin: 0 0 8px 0;
-  color: #333;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
 }
 
 .login-header p {
@@ -144,17 +147,19 @@ const handleLogin = async () => {
 }
 
 .form-group input {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 14px 16px;
+  border: 1.5px solid #e1e5e9;
+  border-radius: 10px;
   font-size: 16px;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
+  background-color: #fafbfc;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  border-color: #000;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .form-group input:disabled {
@@ -172,24 +177,27 @@ const handleLogin = async () => {
 }
 
 .login-button {
-  background-color: #007bff;
+  background-color: #000;
   color: white;
   border: none;
-  padding: 12px;
-  border-radius: 4px;
+  padding: 16px 24px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  letter-spacing: -0.2px;
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: #333;
+  transform: translateY(-1px);
 }
 
 .login-button:disabled {
-  background-color: #6c757d;
+  background-color: #9ca3af;
   cursor: not-allowed;
+  transform: none;
 }
 
 .signup-link {
@@ -204,8 +212,9 @@ const handleLogin = async () => {
 }
 
 .signup-link a {
-  color: #007bff;
+  color: #000;
   text-decoration: none;
+  font-weight: 600;
 }
 
 .signup-link a:hover {
