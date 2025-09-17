@@ -1,17 +1,4 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import { onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useModalStore } from '@/stores/modal'
-import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
-const authStore = useAuthStore()
-const modalStore = useModalStore()
-
-onMounted(() => {
-  authStore.initialize()
-})
-</script>
 
 <template>
   <div id="app">
@@ -26,41 +13,20 @@ onMounted(() => {
         </div>
 
         <div class="header-actions">
-          <div v-if="authStore.isAuthenticated" class="user-section">
-            <div class="user-info">
-              <div class="user-avatar">
-                {{
-                  authStore.user?.nickname?.charAt(0).toUpperCase() ||
-                  authStore.user?.email?.charAt(0).toUpperCase() ||
-                  'U'
-                }}
-              </div>
-              <div class="user-details">
-                <span class="user-name">{{ authStore.user?.nickname || 'User' }}</span>
-                <span class="user-email">{{ authStore.user?.email }}</span>
-              </div>
-            </div>
-            <button @click="authStore.logout" class="logout-btn" title="로그아웃">
-              <span>🚪</span>
-            </button>
-          </div>
-          <div v-else class="auth-section">
-            <RouterLink to="/login" class="login-btn">로그인</RouterLink>
-          </div>
         </div>
       </div>
     </header>
 
     <!-- Tab Navigation -->
-    <nav v-if="authStore.isAuthenticated" class="tab-navigation">
+    <nav class="tab-navigation">
       <div class="tab-container">
-        <RouterLink to="/dashboard" class="tab-item">
+        <RouterLink to="/" class="tab-item">
           <span class="tab-icon">🏠</span>
-          <span class="tab-text">대시보드</span>
+          <span class="tab-text">확장자 관리</span>
         </RouterLink>
-        <RouterLink to="/inventory" class="tab-item">
+        <RouterLink to="/test" class="tab-item">
           <span class="tab-icon">📋</span>
-          <span class="tab-text">인벤토리</span>
+          <span class="tab-text">테스트 실험</span>
         </RouterLink>
       </div>
     </nav>
@@ -102,6 +68,15 @@ onMounted(() => {
     />
   </div>
 </template>
+
+<script setup>
+import { useModalStore } from '@/stores/modal'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+
+
+const modalStore = useModalStore()
+
+</script>
 
 <style scoped>
 /* Global Layout */
