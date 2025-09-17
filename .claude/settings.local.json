@@ -17,7 +17,8 @@
       "Bash(cat:*)",
       "Bash(./gradlew:*)",
       "Bash(pnpm install:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Read(//d/source/flow/**)"
     ],
     "deny": [],
     "ask": []

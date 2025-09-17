@@ -7,8 +7,8 @@
       <div class="header-container">
         <div class="logo-section">
           <div class="logo">
-            <span class="logo-icon">📦</span>
-            <h1 class="app-title">Inventory Manager</h1>
+            <span class="logo-icon">📋</span>
+            <h1 class="app-title">FLOW_TASK</h1>
           </div>
         </div>
 
@@ -21,7 +21,7 @@
     <nav class="tab-navigation">
       <div class="tab-container">
         <RouterLink to="/" class="tab-item">
-          <span class="tab-icon">🏠</span>
+          <span class="tab-icon">📚</span>
           <span class="tab-text">확장자 관리</span>
         </RouterLink>
         <RouterLink to="/test" class="tab-item">
