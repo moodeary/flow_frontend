@@ -23,6 +23,9 @@ RUN pnpm run build
 # Production stage - 간단한 정적 파일 서빙
 FROM nginx:1.24-alpine
 
+# Install curl for health check
+RUN apk add --no-cache curl
+
 # Copy built files from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
