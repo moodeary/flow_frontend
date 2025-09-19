@@ -6,14 +6,14 @@
     </div>
 
     <div class="test-section">
-      <h2 class="section-title">확장자 테스트</h2>
-      <p class="section-desc">확장자를 입력하여 현재 차단 상태를 확인하세요.</p>
+      <h2 class="section-title">파일 확장자 테스트</h2>
+      <p class="section-desc">파일명 또는 확장자를 입력하여 차단 상태를 확인하세요. (.이 없으면 전체를 확장자로 검사)</p>
 
       <div class="test-input-group">
         <InputField
           v-model="testExtension"
-          placeholder="확장자 입력 (예: exe, sh, pdf)"
-          :maxlength="20"
+          placeholder="파일명 또는 확장자 입력 (예: document.pdf, exe, script.sh)"
+          :maxlength="100"
           :error-message="testInputError"
           @enter="checkExtension"
         />
@@ -34,6 +34,8 @@
           <h3 class="result-title">
             {{ testResult.isBlocked ? '차단됨' : '허용됨' }}
           </h3>
+          <p class="result-filename">입력값: {{ testResult.filename }}</p>
+          <p class="result-extension">검사한 확장자: {{ testResult.filename.includes('.') ? '.' + testResult.extension : testResult.extension }}</p>
           <p class="result-message">{{ testResult.message }}</p>
         </div>
       </div>
@@ -51,7 +53,10 @@
           class="history-item"
           :class="{ 'blocked': item.isBlocked, 'allowed': !item.isBlocked }"
         >
-          <div class="history-extension">{{ item.extension }}</div>
+          <div class="history-file-info">
+            <div class="history-filename">{{ item.filename }}</div>
+            <div class="history-extension">{{ item.filename.includes('.') ? '.' + item.extension : item.extension }}</div>
+          </div>
           <div class="history-status">
             <span class="status-icon">{{ item.isBlocked ? '🚫' : '✅' }}</span>
             <span class="status-text">{{ item.isBlocked ? '차단됨' : '허용됨' }}</span>
@@ -82,43 +87,96 @@ const isChecking = ref(false)
 const testResult = ref(null)
 const testHistory = ref([])
 
+/**
+ * 파일명에서 확장자를 추출하는 함수
+ * - 마지막 '.' 이후의 문자열을 확장자로 추출
+ * - '.'이 없으면 전체 파일명을 확장자로 처리
+ * - 빈 문자열이면 빈 문자열 반환
+ */
+const extractExtension = (filename) => {
+  if (!filename || typeof filename !== 'string') {
+    return ''
+  }
+
+  const trimmed = filename.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  const lastDotIndex = trimmed.lastIndexOf('.')
+
+  // '.'이 없으면 전체 파일명을 확장자로 처리
+  if (lastDotIndex === -1) {
+    return trimmed.toLowerCase()
+  }
+
+  // 마지막이 '.'인 경우 빈 문자열 반환
+  if (lastDotIndex === trimmed.length - 1) {
+    return ''
+  }
+
+  return trimmed.substring(lastDotIndex + 1).toLowerCase()
+}
+
+/**
+ * 입력된 파일명에서 확장자를 추출하여 차단 상태를 확인하는 함수
+ * - 입력값 유효성 검증 후 서버에 확장자 체크 요청
+ * - 테스트 결과를 화면에 표시하고 이력에 추가
+ * - 고정/커스텀 확장자 여부와 차단 상태를 종합적으로 확인
+ */
 const checkExtension = async () => {
-  const extension = testExtension.value.trim()
+  const input = testExtension.value.trim()
+
+  // 입력값 유효성 검증
+  if (!input) {
+    testInputError.value = '파일명을 입력해주세요.'
+    return
+  }
+
+  // 파일명에서 확장자 추출
+  const extension = extractExtension(input)
 
   if (!extension) {
-    testInputError.value = '확장자를 입력해주세요.'
+    testInputError.value = '올바른 파일명을 입력해주세요.'
     return
   }
 
   if (extension.length > 20) {
-    testInputError.value = '확장자는 최대 20자까지 입력 가능합니다.'
+    testInputError.value = '확장자는 최대 20자까지 가능합니다.'
     return
   }
 
+  // 검사 시작 - 상태 초기화
   testInputError.value = ''
   isChecking.value = true
   testResult.value = null
 
   try {
+    // 서버에 확장자 차단 상태 확인 요청
     const response = await ApiAxios.get(`/api/extensions/check/${extension}`)
+    console.log('🔍 [API] 확장자 체크 응답:', response)
 
     if (response.data.success) {
+      // 테스트 결과 객체 생성
       const result = {
-        extension,
-        isBlocked: response.data.data,
-        message: response.data.message,
-        timestamp: new Date()
+        filename: input, // 원본 파일명
+        extension,       // 추출된 확장자
+        isBlocked: response.data.data, // 차단 여부 (boolean)
+        message: response.data.message, // 서버에서 제공하는 메시지
+        timestamp: new Date() // 테스트 실행 시간
       }
 
       testResult.value = result
 
-      const existingIndex = testHistory.value.findIndex(item => item.extension === extension)
+      // 이미 테스트한 파일명이 있으면 기존 항목 제거 후 최신 결과를 맨 앞에 추가
+      const existingIndex = testHistory.value.findIndex(item => item.filename === input)
       if (existingIndex !== -1) {
         testHistory.value.splice(existingIndex, 1)
       }
 
-      testHistory.value.unshift(result)
+      testHistory.value.unshift(result) // 최신 결과를 맨 앞에 추가
 
+      // 테스트 이력을 최대 10개까지만 유지
       if (testHistory.value.length > 10) {
         testHistory.value = testHistory.value.slice(0, 10)
       }
@@ -133,10 +191,19 @@ const checkExtension = async () => {
   }
 }
 
+/**
+ * 테스트 이력을 모두 지우는 함수
+ * - 사용자가 '이력 지우기' 버튼을 클릭했을 때 호출
+ */
 const clearHistory = () => {
   testHistory.value = []
 }
 
+/**
+ * 타임스탬프를 한국어 시간 형식으로 포맷하는 함수
+ * - 테스트 이력에서 실행 시간을 표시할 때 사용
+ * - 시:분:초 형식으로 표시 (예: 14:30:25)
+ */
 const formatTime = (timestamp) => {
   return new Intl.DateTimeFormat('ko-KR', {
     hour: '2-digit',
@@ -151,6 +218,8 @@ const formatTime = (timestamp) => {
   max-width: 800px;
   margin: 0 auto;
   padding: 32px 24px;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 .header {
@@ -269,6 +338,20 @@ const formatTime = (timestamp) => {
   color: #16a34a;
 }
 
+.result-filename {
+  font-size: 14px;
+  margin: 0 0 4px 0;
+  color: var(--color-foreground);
+  font-weight: 500;
+}
+
+.result-extension {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  color: var(--color-foreground-secondary);
+  font-family: monospace;
+}
+
 .result-message {
   font-size: 16px;
   margin: 0;
@@ -287,6 +370,27 @@ const formatTime = (timestamp) => {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 24px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: var(--color-background-secondary);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground-tertiary);
 }
 
 .history-item {
@@ -308,10 +412,22 @@ const formatTime = (timestamp) => {
   border-left: 4px solid #16a34a;
 }
 
-.history-extension {
+.history-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-filename {
   font-weight: 600;
   font-size: 16px;
   color: var(--color-foreground);
+}
+
+.history-extension {
+  font-size: 12px;
+  color: var(--color-foreground-secondary);
+  font-family: monospace;
 }
 
 .history-status {
@@ -388,9 +504,18 @@ const formatTime = (timestamp) => {
     gap: 8px;
   }
 
+  .history-file-info {
+    order: 1;
+  }
+
   .history-status {
     order: -1;
     align-self: flex-end;
+  }
+
+  .history-time {
+    order: 2;
+    align-self: flex-start;
   }
 }
 </style>
