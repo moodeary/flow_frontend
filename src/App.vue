@@ -53,28 +53,11 @@
     </footer>
 
     <!-- 전역 모달 -->
-    <ConfirmModal
-      v-model="modalStore.isOpen"
-      :title="modalStore.config.title"
-      :message="modalStore.config.message"
-      :confirm-text="modalStore.config.confirmText"
-      :cancel-text="modalStore.config.cancelText"
-      :variant="modalStore.config.variant"
-      :hide-cancel="modalStore.config.hideCancel"
-      :is-loading="modalStore.config.isLoading"
-      :close-on-backdrop="modalStore.config.closeOnBackdrop"
-      @confirm="modalStore.handleConfirm"
-      @cancel="modalStore.handleCancel"
-    />
+
   </div>
 </template>
 
 <script setup>
-import { useModalStore } from '@/stores/modal'
-import ConfirmModal from '@/components/common/ConfirmModal.vue'
-
-
-const modalStore = useModalStore()
 
 </script>
 

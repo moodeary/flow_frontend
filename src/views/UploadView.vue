@@ -69,7 +69,7 @@
         </div>
       </div>
 
-      <button v-if="files.length > 0" class="refresh-btn" @click="loadFiles">
+      <button v-if="files.length > 0" class="refresh-btn" @click="fileStore.loadFiles">
         새로고침
         </button>
       </div>
@@ -79,14 +79,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import ApiAxios from '@/api/ApiAxios.js'
+import { storeToRefs } from 'pinia'
+import { useFileStore } from '@/stores/file'
 
 // 파일 업로드 관련
 const fileInput = ref(null)
 const isDragOver = ref(false)
-const uploadingFiles = ref([])
-const files = ref([])
-const isLoadingFiles = ref(false)
+
+// Pinia 스토어 사용
+const fileStore = useFileStore()
+const { files, isLoadingFiles, uploadingFiles } = storeToRefs(fileStore)
 
 
 // 파일 업로드/다운로드 관련 함수들
@@ -131,93 +133,23 @@ const processFiles = async (fileList) => {
 
     // 확장자 체크
     const extension = getFileExtension(file.name)
-    const isBlocked = await checkFileExtension(extension)
+    const extensionResult = await fileStore.checkFileExtension(extension)
 
-    if (isBlocked) {
+    if (!extensionResult.success) {
+      console.error('확장자 체크 실패:', extensionResult.error)
+      continue
+    }
+
+    if (extensionResult.isBlocked) {
       alert(`${file.name}의 확장자(${extension})는 차단된 확장자입니다.`)
       continue
     }
 
     // 업로드 진행
-    await uploadFile(file)
-  }
-}
-
-/**
- * 파일 확장자 체크
- */
-const checkFileExtension = async (extension) => {
-  try {
-    const response = await ApiAxios.get(`/api/extensions/check/${extension}`)
-    return response.data.data // 차단 여부
-  } catch (error) {
-    console.error('확장자 체크 실패:', error)
-    return false
-  }
-}
-
-/**
- * 파일 업로드
- */
-const uploadFile = async (file) => {
-  const uploadItem = {
-    id: Date.now() + Math.random(),
-    name: file.name,
-    status: 'uploading',
-    statusText: '업로드 중...'
-  }
-
-  uploadingFiles.value.push(uploadItem)
-
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    const response = await ApiAxios.post('/api/files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-
-    if (response.data.success) {
-      uploadItem.status = 'success'
-      uploadItem.statusText = '업로드 완료'
-
-      // 파일 목록 새로고침
-      await loadFiles()
-    } else {
-      uploadItem.status = 'error'
-      uploadItem.statusText = '업로드 실패'
+    const uploadResult = await fileStore.uploadFile(file)
+    if (!uploadResult.success) {
+      console.error('업로드 실패:', uploadResult.error)
     }
-  } catch (error) {
-    console.error('파일 업로드 실패:', error)
-    uploadItem.status = 'error'
-    uploadItem.statusText = '업로드 실패'
-  }
-
-  // 3초 후 업로드 진행 목록에서 제거
-  setTimeout(() => {
-    const index = uploadingFiles.value.findIndex(item => item.id === uploadItem.id)
-    if (index !== -1) {
-      uploadingFiles.value.splice(index, 1)
-    }
-  }, 3000)
-}
-
-/**
- * 파일 목록 조회
- */
-const loadFiles = async () => {
-  isLoadingFiles.value = true
-  try {
-    const response = await ApiAxios.get('/api/files')
-    if (response.data.success) {
-      files.value = response.data.data
-    }
-  } catch (error) {
-    console.error('파일 목록 조회 실패:', error)
-  } finally {
-    isLoadingFiles.value = false
   }
 }
 
@@ -225,23 +157,8 @@ const loadFiles = async () => {
  * 파일 다운로드
  */
 const downloadFile = async (file) => {
-  try {
-    const response = await ApiAxios.get(`/api/files/${file.id}/download`, {
-      responseType: 'blob'
-    })
-
-    // Blob URL 생성 및 다운로드
-    const blob = new Blob([response.data])
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = file.originalFilename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('파일 다운로드 실패:', error)
+  const result = await fileStore.downloadFile(file)
+  if (!result.success) {
     alert('파일 다운로드에 실패했습니다.')
   }
 }
@@ -254,15 +171,8 @@ const deleteFile = async (file) => {
     return
   }
 
-  try {
-    const response = await ApiAxios.delete(`/api/files/${file.id}`)
-    if (response.data.success) {
-      await loadFiles() // 목록 새로고침
-    } else {
-      alert('파일 삭제에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('파일 삭제 실패:', error)
+  const result = await fileStore.deleteFile(file)
+  if (!result.success) {
     alert('파일 삭제에 실패했습니다.')
   }
 }
@@ -303,7 +213,7 @@ const formatDate = (dateString) => {
 
 // 컴포넌트 마운트 시 파일 목록 로드
 onMounted(() => {
-  loadFiles()
+  fileStore.loadFiles()
 })
 </script>
 

@@ -1,7 +1,20 @@
 <template>
   <div class="section">
-    <h2 class="section-title">커스텀 확장자</h2>
-    <p class="section-desc">최대 200개까지 추가할 수 있습니다. (현재: {{ customExtensions.length }}/200)</p>
+    <div class="section-header">
+      <div class="section-info">
+        <h2 class="section-title">커스텀 확장자</h2>
+        <p class="section-desc">최대 200개까지 추가할 수 있습니다. (현재: {{ customExtensions.length }}/200)</p>
+      </div>
+      <button
+        v-if="customExtensions.length > 0"
+        class="clear-all-btn"
+        @click="clearAllCustomExtensions"
+        :disabled="loading"
+        title="전체 삭제"
+      >
+        전체 삭제
+      </button>
+    </div>
 
     <div class="custom-input-group">
       <InputField
@@ -44,32 +57,24 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import InputField from '@/components/common/InputField.vue'
-import ApiAxios from '@/api/ApiAxios'
+import { useExtensionStore } from '@/stores/extension'
 
-const customExtensions = ref([])
 const newCustomExtension = ref('')
 const customInputError = ref('')
-const loading = ref(false)
+
+// Pinia 스토어 사용
+const extensionStore = useExtensionStore()
+const { customExtensions, isLoadingCustom: loading } = storeToRefs(extensionStore)
 
 /**
  * 커스텀 확장자 목록을 서버에서 조회하는 함수
- * - 서버의 /api/extensions/custom GET 엔드포인트 호출
- * - 사용자가 직접 추가한 확장자들의 목록 조회
  */
 const fetchCustomExtensions = async () => {
-  loading.value = true
-  try {
-    const response = await ApiAxios.get('/api/extensions/custom')
-    console.log('🔍 [API] 커스텀확장자 조회 응답:', response)
-    if (response.data.success) {
-      customExtensions.value = response.data.data
-    }
-  } catch (error) {
-    console.error('커스텀 확장자 조회 실패:', error)
+  const result = await extensionStore.loadCustomExtensions()
+  if (!result.success) {
     alert('커스텀 확장자 목록을 불러오는데 실패했습니다.')
-  } finally {
-    loading.value = false
   }
 }
 
@@ -97,9 +102,6 @@ const validateCustomExtension = (extension) => {
 
 /**
  * 새로운 커스텀 확장자를 추가하는 함수
- * - 입력값 유효성 검증 후 서버에 POST 요청
- * - 최대 200개 제한 확인
- * - 성공 시 로컬 목록에 추가 및 입력 폼 초기화
  */
 const addCustomExtension = async () => {
   const extension = newCustomExtension.value.trim()
@@ -116,29 +118,17 @@ const addCustomExtension = async () => {
     return
   }
 
-  try {
-    const response = await ApiAxios.post('/api/extensions/custom', { extension })
-    console.log('➕ [API] 커스텀확장자 추가 응답:', response)
-
-    if (response.data.success) {
-      // 서버에서 반환된 데이터를 로컬 목록에 추가
-      customExtensions.value.push(response.data.data)
-      newCustomExtension.value = '' // 입력 폼 초기화
-      customInputError.value = ''
-    } else {
-      customInputError.value = response.data.message || '추가에 실패했습니다.'
-    }
-  } catch (error) {
-    console.error('커스텀 확장자 추가 실패:', error)
-    alert('커스텀 확장자 추가에 실패했습니다.')
-    customInputError.value = '추가에 실패했습니다.'
+  const result = await extensionStore.addCustomExtension(extension)
+  if (result.success) {
+    newCustomExtension.value = '' // 입력 폼 초기화
+    customInputError.value = ''
+  } else {
+    customInputError.value = result.error || '추가에 실패했습니다.'
   }
 }
 
 /**
  * 커스텀 확장자를 삭제하는 함수
- * - 확인 대화상자를 표시하여 사용자에게 삭제 의사 확인
- * - 확인 시 서버에 DELETE 요청 후 로컬 목록에서 제거
  */
 const removeCustomExtension = async (id) => {
   const extension = customExtensions.value.find(ext => ext.id === id)
@@ -149,18 +139,8 @@ const removeCustomExtension = async (id) => {
     return
   }
 
-  try {
-    const response = await ApiAxios.delete(`/api/extensions/custom/${id}`)
-    console.log('🗑️ [API] 커스텀확장자 삭제 응답:', response)
-
-    if (response.data.success) {
-      // 서버 삭제 성공 시 로컬 목록에서 제거
-      customExtensions.value = customExtensions.value.filter(ext => ext.id !== id)
-    } else {
-      alert('커스텀 확장자 삭제에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('커스텀 확장자 삭제 실패:', error)
+  const result = await extensionStore.deleteCustomExtension(id)
+  if (!result.success) {
     alert('커스텀 확장자 삭제에 실패했습니다.')
   }
 }
@@ -174,6 +154,20 @@ onMounted(() => {
 defineExpose({
   loadCustomExtensions: fetchCustomExtensions
 })
+
+/**
+ * 모든 커스텀 확장자를 삭제하는 함수
+ */
+const clearAllCustomExtensions = async () => {
+  if (!confirm(`모든 커스텀 확장자(${customExtensions.value.length}개)를 삭제하시겠습니까?`)) {
+    return
+  }
+
+  const result = await extensionStore.deleteAllCustomExtensions()
+  if (!result.success) {
+    alert('커스텀 확장자 전체 삭제에 실패했습니다.')
+  }
+}
 </script>
 
 <style scoped>
@@ -183,6 +177,17 @@ defineExpose({
   padding: 12px;
   margin-bottom: 12px;
   border: 1px solid var(--color-border);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.section-info {
+  flex: 1;
 }
 
 .section-title {
@@ -195,7 +200,33 @@ defineExpose({
 .section-desc {
   font-size: 10px;
   color: var(--color-foreground-secondary);
-  margin: 0 0 12px 0;
+  margin: 0;
+}
+
+.clear-all-btn {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #dc2626, #ef4444, #b91c1c);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.clear-all-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c, #dc2626, #991b1b);
+  transform: translateY(-1px);
+}
+
+.clear-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .loading, .empty {

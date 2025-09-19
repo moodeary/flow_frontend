@@ -1,7 +1,20 @@
 <template>
   <div class="section">
-    <h2 class="section-title">고정 확장자</h2>
-    <p class="section-desc">자주 차단하는 확장자 목록입니다. 최대 9개까지 추가할 수 있습니다. (현재: {{ fixedExtensions.length }}/9)</p>
+    <div class="section-header">
+      <div class="section-info">
+        <h2 class="section-title">고정 확장자</h2>
+        <p class="section-desc">자주 차단하는 확장자 목록입니다. 최대 9개까지 추가할 수 있습니다. (현재: {{ fixedExtensions.length }}/9)</p>
+      </div>
+      <button
+        v-if="fixedExtensions.length > 0"
+        class="reset-btn"
+        @click="resetFixedExtensions"
+        :disabled="loading"
+        title="기본 확장자로 초기화"
+      >
+        초기화
+      </button>
+    </div>
 
     <div class="fixed-input-group">
       <InputField
@@ -51,51 +64,32 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import InputField from '@/components/common/InputField.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
-import ApiAxios from '@/api/ApiAxios'
+import { useExtensionStore } from '@/stores/extension'
 
-const fixedExtensions = ref([])
 const newFixedExtension = ref('')
 const fixedInputError = ref('')
-const loading = ref(false)
+
+// Pinia 스토어 사용
+const extensionStore = useExtensionStore()
+const { fixedExtensions, isLoadingFixed: loading } = storeToRefs(extensionStore)
 
 /**
  * 고정 확장자 목록을 서버에서 조회하는 함수
- * - 서버의 /api/extensions/fixed GET 엔드포인트 호출
- * - blocked 값을 isBlocked로 매핑
- * - 로딩 상태 관리 및 에러 처리 포함
  */
 const fetchFixedExtensions = async () => {
-  loading.value = true
-  try {
-    const response = await ApiAxios.get('/api/extensions/fixed')
-    console.log('🔍 [API] 고정확장자 조회 응답:', response)
-    if (response.data.success) {
-      console.log('고정확장자 원본 데이터:', response.data.data)
-      // 서버에서 blocked 필드로 받아서 isBlocked로 매핑
-      fixedExtensions.value = response.data.data.map(ext => {
-        console.log('확장자:', ext.extension, 'blocked:', ext.blocked)
-        return {
-          ...ext,
-          isBlocked: ext.blocked ?? false // blocked 필드를 isBlocked로 매핑
-        }
-      })
-      console.log('처리된 고정확장자 데이터:', fixedExtensions.value)
-    }
-  } catch (error) {
-    console.error('고정 확장자 조회 실패:', error)
+  console.log('🚀 fetchFixedExtensions 호출됨')
+  const result = await extensionStore.loadFixedExtensions()
+  console.log('🔍 fetchFixedExtensions 결과:', result)
+  if (!result.success) {
     alert('고정 확장자 목록을 불러오는데 실패했습니다.')
-  } finally {
-    loading.value = false
   }
 }
 
 /**
  * 고정 확장자의 차단 상태를 토글하는 함수
- * - 서버의 /api/extensions/fixed/{extension} PUT 엔드포인트 호출 (isBlocked 파라미터)
- * - 토글 버튼 클릭 시 호출되어 차단/허용 상태 변경
- * - 실패 시 데이터를 다시 불러와 동기화 보장
  */
 const updateFixedExtension = async (extension, isBlocked) => {
   const action = isBlocked ? '차단' : '허용'
@@ -107,20 +101,8 @@ const updateFixedExtension = async (extension, isBlocked) => {
     return
   }
 
-  try {
-    const response = await ApiAxios.put(`/api/extensions/fixed/${extension}`, null, {
-      params: { isBlocked }
-    })
-    console.log('🔄 [API] 고정확장자 토글 응답:', response)
-    if (response.data.success) {
-      // 로컬 상태 업데이트
-      const index = fixedExtensions.value.findIndex(ext => ext.extension === extension)
-      if (index !== -1) {
-        fixedExtensions.value[index].isBlocked = isBlocked
-      }
-    }
-  } catch (error) {
-    console.error('고정 확장자 업데이트 실패:', error)
+  const result = await extensionStore.toggleFixedExtension(extension, isBlocked)
+  if (!result.success) {
     alert('고정 확장자 상태 변경에 실패했습니다.')
     // 실패 시 서버 데이터로 다시 동기화
     fetchFixedExtensions()
@@ -151,9 +133,6 @@ const validateFixedExtension = (extension) => {
 
 /**
  * 새로운 고정 확장자를 추가하는 함수
- * - 입력값 유효성 검증 후 서버에 POST 요청
- * - 최대 10개 제한 확인
- * - 성공 시 로컬 목록에 추가 및 입력 폼 초기화
  */
 const addFixedExtension = async () => {
   const extension = newFixedExtension.value.trim()
@@ -170,33 +149,17 @@ const addFixedExtension = async () => {
     return
   }
 
-  try {
-    const response = await ApiAxios.post('/api/extensions/fixed', { extension })
-    console.log('➕ [API] 고정확장자 추가 응답:', response)
-
-    if (response.data.success) {
-      // 서버에서 반환된 데이터를 로컬 목록에 추가 (서버는 isBlocked 필드로 응답)
-      const newExtension = {
-        ...response.data.data,
-        isBlocked: response.data.data.isBlocked ?? false // POST 응답은 isBlocked 필드
-      }
-      fixedExtensions.value.push(newExtension)
-      newFixedExtension.value = '' // 입력 폼 초기화
-      fixedInputError.value = ''
-    } else {
-      fixedInputError.value = response.data.message || '추가에 실패했습니다.'
-    }
-  } catch (error) {
-    console.error('고정 확장자 추가 실패:', error)
-    alert('고정 확장자 추가에 실패했습니다.')
-    fixedInputError.value = '추가에 실패했습니다.'
+  const result = await extensionStore.addFixedExtension(extension)
+  if (result.success) {
+    newFixedExtension.value = '' // 입력 폼 초기화
+    fixedInputError.value = ''
+  } else {
+    fixedInputError.value = result.error || '추가에 실패했습니다.'
   }
 }
 
 /**
  * 고정 확장자를 삭제하는 함수
- * - 확인 대화상자를 표시하여 사용자에게 삭제 의사 확인
- * - 확인 시 서버에 DELETE 요청 후 로컬 목록에서 제거
  */
 const removeFixedExtension = async (id) => {
   const extension = fixedExtensions.value.find(ext => ext.id === id)
@@ -207,18 +170,8 @@ const removeFixedExtension = async (id) => {
     return
   }
 
-  try {
-    const response = await ApiAxios.delete(`/api/extensions/fixed/${id}`)
-    console.log('🗑️ [API] 고정확장자 삭제 응답:', response)
-
-    if (response.data.success) {
-      // 서버 삭제 성공 시 로컬 목록에서 제거
-      fixedExtensions.value = fixedExtensions.value.filter(ext => ext.id !== id)
-    } else {
-      alert('고정 확장자 삭제에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('고정 확장자 삭제 실패:', error)
+  const result = await extensionStore.deleteFixedExtension(id)
+  if (!result.success) {
     alert('고정 확장자 삭제에 실패했습니다.')
   }
 }
@@ -227,6 +180,20 @@ const removeFixedExtension = async (id) => {
 onMounted(() => {
   fetchFixedExtensions() // 고정 확장자 목록 조회
 })
+
+/**
+ * 고정 확장자를 기본 상태로 초기화하는 함수
+ */
+const resetFixedExtensions = async () => {
+  if (!confirm('고정 확장자를 기본 상태(bat, cmd, cpl, exe, js, scr)로 초기화하시겠습니까?')) {
+    return
+  }
+
+  const result = await extensionStore.resetFixedExtensions()
+  if (!result.success) {
+    alert('고정 확장자 초기화에 실패했습니다.')
+  }
+}
 
 // 부모 컴포넌트에서 호출할 수 있는 메서드 expose
 defineExpose({
@@ -243,6 +210,17 @@ defineExpose({
   border: 1px solid var(--color-border);
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.section-info {
+  flex: 1;
+}
+
 .section-title {
   font-size: 14px;
   font-weight: 600;
@@ -253,7 +231,33 @@ defineExpose({
 .section-desc {
   font-size: 10px;
   color: var(--color-foreground-secondary);
-  margin: 0 0 12px 0;
+  margin: 0;
+}
+
+.reset-btn {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24, #d97706);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706, #f59e0b, #b45309);
+  transform: translateY(-1px);
+}
+
+.reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .loading, .empty {

@@ -49,9 +49,12 @@
 <script setup>
 import { ref } from 'vue'
 import InputField from '@/components/common/InputField.vue'
-import ApiAxios from '@/api/ApiAxios.js'
+import { useExtensionStore } from '@/stores/extension'
 
 const emit = defineEmits(['extension-unblocked'])
+
+// Pinia 스토어 사용
+const extensionStore = useExtensionStore()
 
 const testExtension = ref('')
 const testInputError = ref('')
@@ -124,23 +127,20 @@ const checkExtension = async () => {
   testResult.value = null
 
   try {
-    // 서버에 확장자 차단 상태 확인 요청
-    const response = await ApiAxios.get(`/api/extensions/check/${extension}`)
-    console.log('🔍 [API] 확장자 체크 응답:', response)
+    // 스토어를 통해 확장자 차단 상태 확인
+    const result = await extensionStore.checkExtension(extension)
 
-    if (response.data.success) {
+    if (result.success) {
       // 테스트 결과 객체 생성
-      const result = {
+      testResult.value = {
         filename: input, // 원본 파일명
         extension,       // 추출된 확장자
-        isBlocked: response.data.data, // 차단 여부 (boolean)
-        message: response.data.message, // 서버에서 제공하는 메시지
+        isBlocked: result.isBlocked, // 차단 여부 (boolean)
+        message: result.isBlocked ? '이 확장자는 차단되었습니다.' : '이 확장자는 허용됩니다.',
         timestamp: new Date() // 테스트 실행 시간
       }
-
-      testResult.value = result
     } else {
-      testInputError.value = response.data.message || '테스트에 실패했습니다.'
+      testInputError.value = result.error || '테스트에 실패했습니다.'
     }
   } catch (error) {
     console.error('확장자 테스트 실패:', error)
@@ -152,8 +152,6 @@ const checkExtension = async () => {
 
 /**
  * 차단된 확장자를 허용하는 함수
- * - 커스텀 확장자: 삭제
- * - 고정 확장자: isBlocked를 false로 업데이트
  */
 const unblockExtension = async () => {
   if (!testResult.value || !testResult.value.extension) {
@@ -168,54 +166,31 @@ const unblockExtension = async () => {
   isUnblocking.value = true
 
   try {
-    const extension = testResult.value.extension
-
     // 먼저 확장자가 고정인지 커스텀인지 확인
-    const typeResponse = await ApiAxios.get(`/api/extensions/type/${extension}`)
+    const typeResult = await extensionStore.getExtensionType(extension)
 
-    if (!typeResponse.data.success) {
+    if (!typeResult.success) {
       alert('확장자 타입 확인에 실패했습니다.')
       return
     }
 
-    const extensionType = typeResponse.data.data // 'fixed' 또는 'custom'
-    let response
+    const extensionType = typeResult.type // 'fixed' 또는 'custom'
 
-    if (extensionType === 'custom') {
-      // 커스텀 확장자: 삭제
-      response = await ApiAxios.delete(`/api/extensions/custom/extension/${extension}`)
+    // 스토어를 통해 확장자 차단 해제
+    const unblockResult = await extensionStore.unblockExtension(extension, extensionType)
 
-      if (response.data.success) {
-        testResult.value.isBlocked = false
+    if (unblockResult.success) {
+      testResult.value.isBlocked = false
+      if (extensionType === 'custom') {
         testResult.value.message = '커스텀 확장자가 삭제되어 차단이 해제되었습니다.'
-        console.log('✅ 커스텀 확장자 삭제 완료:', extension)
-
-        // 부모 컴포넌트에 확장자 목록 새로고침 요청
-        emit('extension-unblocked', { extension, type: 'custom' })
-      }
-    } else if (extensionType === 'fixed') {
-      // 고정 확장자: isBlocked를 false로 업데이트
-      response = await ApiAxios.put('/api/extensions/fixed', {
-        extension: extension,
-        isBlocked: false
-      })
-
-      if (response.data.success) {
-        testResult.value.isBlocked = false
+      } else {
         testResult.value.message = '고정 확장자의 차단이 해제되었습니다.'
-        console.log('✅ 고정 확장자 차단 해제 완료:', extension)
-
-        // 부모 컴포넌트에 확장자 목록 새로고침 요청
-        emit('extension-unblocked', { extension, type: 'fixed' })
       }
-    } else {
-      alert('알 수 없는 확장자 타입입니다.')
-      return
-    }
 
-    if (!response.data.success) {
-      console.error('차단 해제 실패:', response.data.message)
-      alert(response.data.message || '차단 해제에 실패했습니다.')
+      // 부모 컴포넌트에 확장자 목록 새로고침 요청
+      emit('extension-unblocked', { extension, type: extensionType })
+    } else {
+      alert(unblockResult.error || '차단 해제에 실패했습니다.')
     }
   } catch (error) {
     console.error('차단 해제 요청 실패:', error)
