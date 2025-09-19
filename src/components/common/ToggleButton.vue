@@ -70,7 +70,7 @@ const props = defineProps({
   },
   size: {
     type: String,
-    default: 'md',
+    default: 'sm',
     validator: (value) => ['sm', 'md', 'lg'].includes(value)
   },
   color: {
@@ -126,7 +126,7 @@ const handleToggle = () => {
 .toggle-button {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: 8px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -172,19 +172,19 @@ const handleToggle = () => {
 
 /* Size variants */
 .toggle-sm .toggle-track {
-  width: 36px;
-  height: 20px;
-  padding: 2px;
+  width: 28px;
+  height: 16px;
+  padding: 1px;
 }
 
 .toggle-sm .toggle-thumb {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   transform: translateX(0);
 }
 
 .toggle-sm.toggle-on .toggle-thumb {
-  transform: translateX(16px);
+  transform: translateX(12px);
 }
 
 .toggle-md .toggle-track {
@@ -290,16 +290,16 @@ const handleToggle = () => {
 
 /* Label and description */
 .toggle-label {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--color-foreground);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .toggle-description {
-  font-size: var(--font-size-sm);
+  font-size: 10px;
   color: var(--color-foreground-secondary);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .toggle-with-content {

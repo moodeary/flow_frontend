@@ -193,23 +193,23 @@ onMounted(() => {
 <style scoped>
 .section {
   background: var(--color-background-secondary);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
   border: 1px solid var(--color-border);
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-foreground);
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .section-desc {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground-secondary);
-  margin: 0 0 24px 0;
+  margin: 0 0 12px 0;
 }
 
 .loading, .empty {
@@ -221,22 +221,23 @@ onMounted(() => {
 
 .custom-input-group {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .add-btn {
-  padding: 12px 24px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, #6b7280, #9ca3af, #4b5563);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  min-width: 80px;
-  height: 56px;
+  min-width: 50px;
+  height: 32px;
 }
 
 .add-btn:hover:not(:disabled) {
@@ -253,10 +254,10 @@ onMounted(() => {
 .custom-extensions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  max-height: 500px;
+  gap: 6px;
+  max-height: 100px;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 
 .custom-extensions::-webkit-scrollbar {
@@ -282,14 +283,14 @@ onMounted(() => {
   align-items: center;
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 8px 12px;
-  font-size: 14px;
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 10px;
   color: var(--color-foreground);
 }
 
 .tag-text {
-  margin-right: 8px;
+  margin-right: 4px;
 }
 
 .remove-btn {
@@ -297,10 +298,10 @@ onMounted(() => {
   border: none;
   color: var(--color-error);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 12px;
   line-height: 1;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,6 +327,10 @@ onMounted(() => {
 
   .custom-input-group {
     flex-direction: column;
+  }
+
+  .custom-extensions {
+    max-height: 250px;
   }
 }
 </style>

@@ -5,21 +5,22 @@
       <p class="description">파일 확장자를 관리하고 테스트할 수 있습니다.</p>
     </div>
 
-    <!-- 고정/커스텀 확장자 섹션 (좌우 배치) -->
-    <div class="extensions-row">
-      <!-- 고정 확장자 섹션 -->
-      <div class="extension-column">
+    <!-- 메인 컨텐츠 영역 -->
+    <div class="main-content">
+      <!-- 왼쪽: 고정/커스텀 확장자 섹션 (위아래 배치) -->
+      <div class="left-column">
+        <!-- 고정 확장자 섹션 -->
         <FixedExtensions />
-      </div>
 
-      <!-- 커스텀 확장자 섹션 -->
-      <div class="extension-column">
+        <!-- 커스텀 확장자 섹션 -->
         <CustomExtensions />
       </div>
-    </div>
 
-    <!-- 확장자 테스트 섹션 (전체 폭) -->
-    <ExtensionTest />
+      <!-- 오른쪽: 확장자 테스트 섹션 -->
+      <div class="right-column">
+        <ExtensionTest />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -31,40 +32,46 @@ import ExtensionTest from '@/components/extensions/ExtensionTest.vue'
 
 <style scoped>
 .home-container {
-  max-width: 1800px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 16px 12px;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 20px;
 }
 
 .title {
-  font-size: 32px;
+  font-size: 18px;
   font-weight: 700;
   background: linear-gradient(135deg, #374151, #6b7280, #9ca3af);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -1px;
+  margin: 0 0 8px 0;
 }
 
 .description {
-  font-size: 18px;
+  font-size: 12px;
   color: var(--color-foreground-secondary);
   margin: 0;
 }
 
-.extensions-row {
+.main-content {
   display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-.extension-column {
-  flex: 1;
+.left-column {
+  width: 60%;
+  min-width: 0;
+}
+
+.right-column {
+  width: 40%;
   min-width: 0;
 }
 
@@ -77,10 +84,9 @@ import ExtensionTest from '@/components/extensions/ExtensionTest.vue'
     font-size: 24px;
   }
 
-  .extensions-row {
+  .main-content {
     flex-direction: column;
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 24px;
   }
 }
 </style>

@@ -143,42 +143,44 @@ const checkExtension = async () => {
 <style scoped>
 .section {
   background: var(--color-background-secondary);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
   border: 1px solid var(--color-border);
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-foreground);
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .section-desc {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground-secondary);
-  margin: 0 0 24px 0;
+  margin: 0 0 12px 0;
 }
 
 .test-input-group {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .test-btn {
-  padding: 12px 24px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, #6b7280, #9ca3af, #4b5563);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  min-width: 100px;
+  min-width: 60px;
+  height: 32px;
 }
 
 .test-btn:hover:not(:disabled) {
@@ -195,10 +197,10 @@ const checkExtension = async () => {
 .test-result {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 24px;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
   transition: all 0.3s ease;
 }
 
@@ -213,7 +215,7 @@ const checkExtension = async () => {
 }
 
 .result-icon {
-  font-size: 48px;
+  font-size: 24px;
   flex-shrink: 0;
 }
 
@@ -222,9 +224,9 @@ const checkExtension = async () => {
 }
 
 .result-title {
-  font-size: 20px;
+  font-size: 12px;
   font-weight: 600;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .test-result.blocked .result-title {
@@ -236,21 +238,21 @@ const checkExtension = async () => {
 }
 
 .result-filename {
-  font-size: 14px;
-  margin: 0 0 4px 0;
+  font-size: 10px;
+  margin: 0 0 2px 0;
   color: var(--color-foreground);
   font-weight: 500;
 }
 
 .result-extension {
-  font-size: 14px;
-  margin: 0 0 8px 0;
+  font-size: 10px;
+  margin: 0 0 4px 0;
   color: var(--color-foreground-secondary);
   font-family: monospace;
 }
 
 .result-message {
-  font-size: 16px;
+  font-size: 11px;
   margin: 0;
   color: var(--color-foreground-secondary);
 }

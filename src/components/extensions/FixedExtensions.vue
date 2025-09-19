@@ -1,7 +1,7 @@
 <template>
   <div class="section">
     <h2 class="section-title">고정 확장자</h2>
-    <p class="section-desc">자주 차단하는 확장자 목록입니다. 최대 10개까지 추가할 수 있습니다. (현재: {{ fixedExtensions.length }}/10)</p>
+    <p class="section-desc">자주 차단하는 확장자 목록입니다. 최대 9개까지 추가할 수 있습니다. (현재: {{ fixedExtensions.length }}/9)</p>
 
     <div class="fixed-input-group">
       <InputField
@@ -14,7 +14,7 @@
       />
       <button
         class="add-btn"
-        :disabled="!newFixedExtension.trim() || fixedExtensions.length >= 10 || loading"
+        :disabled="!newFixedExtension.trim() || fixedExtensions.length >= 9 || loading"
         @click="addFixedExtension"
       >
         추가
@@ -172,8 +172,8 @@ const addFixedExtension = async () => {
   }
 
   // 최대 개수 제한 확인
-  if (fixedExtensions.value.length >= 10) {
-    fixedInputError.value = '최대 10개까지만 추가할 수 있습니다.'
+  if (fixedExtensions.value.length >= 9) {
+    fixedInputError.value = '최대 9개까지만 추가할 수 있습니다.'
     return
   }
 
@@ -241,23 +241,23 @@ onMounted(() => {
 <style scoped>
 .section {
   background: var(--color-background-secondary);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
   border: 1px solid var(--color-border);
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-foreground);
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .section-desc {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground-secondary);
-  margin: 0 0 24px 0;
+  margin: 0 0 12px 0;
 }
 
 .loading, .empty {
@@ -269,22 +269,23 @@ onMounted(() => {
 
 .fixed-input-group {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .add-btn {
-  height: 56px;
-  padding: 12px 24px;
+  height: 32px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, #6b7280, #9ca3af, #4b5563);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  min-width: 80px;
+  min-width: 50px;
 }
 
 .add-btn:hover:not(:disabled) {
@@ -300,11 +301,11 @@ onMounted(() => {
 
 .fixed-extensions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  max-height: 500px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 120px;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 
 .fixed-extensions::-webkit-scrollbar {
@@ -326,9 +327,9 @@ onMounted(() => {
 }
 
 .fixed-extension-item {
-  padding: 16px;
+  padding: 8px;
   background: var(--color-background);
-  border-radius: 12px;
+  border-radius: 6px;
   border: 1px solid var(--color-border);
 }
 
@@ -343,16 +344,16 @@ onMounted(() => {
   border: none;
   color: var(--color-error);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 14px;
   line-height: 1;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s;
-  margin-left: 12px;
+  margin-left: 6px;
   flex-shrink: 0;
 }
 
@@ -377,8 +378,8 @@ onMounted(() => {
   }
 
   .fixed-extensions {
-    grid-template-columns: repeat(2, 1fr);
-    max-height: 400px;
+    grid-template-columns: repeat(3, 1fr);
+    max-height: 250px;
   }
 }
 

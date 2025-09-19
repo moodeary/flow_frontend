@@ -138,7 +138,7 @@ const props = defineProps({
   },
   size: {
     type: String,
-    default: 'md',
+    default: 'sm',
     validator: (value) => ['sm', 'md', 'lg'].includes(value)
   },
   variant: {
@@ -339,9 +339,9 @@ defineExpose({
 
 /* Size variants */
 .input-field-sm .input-control {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
-  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
+  min-height: 28px;
 }
 
 .input-field-md .input-control {
