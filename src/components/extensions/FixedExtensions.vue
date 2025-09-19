@@ -33,7 +33,6 @@
           <ToggleButton
             :model-value="extension.isBlocked"
             :label="extension.extension"
-            :description="extension.description"
             @update:model-value="updateFixedExtension(extension.extension, $event)"
           />
           <button
@@ -301,7 +300,7 @@ onMounted(() => {
 
 .fixed-extensions {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   max-height: 500px;
   overflow-y: auto;
@@ -378,8 +377,14 @@ onMounted(() => {
   }
 
   .fixed-extensions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     max-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fixed-extensions {
+    grid-template-columns: 1fr;
   }
 }
 </style>
