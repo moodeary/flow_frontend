@@ -24,7 +24,7 @@
           <span class="tab-icon">📚</span>
           <span class="tab-text">확장자 관리</span>
         </RouterLink>
-        <RouterLink to="/test" class="tab-item">
+        <RouterLink to="/upload" class="tab-item">
           <span class="tab-icon">📋</span>
           <span class="tab-text">파일 업로드</span>
         </RouterLink>
@@ -41,7 +41,7 @@
       <div class="footer-container">
         <div class="footer-content">
           <div class="footer-info">
-            <span>© 2025 Inventory Manager. All rights reserved.</span>
+            <span>© 2025 flow task. All rights reserved.</span>
           </div>
           <div class="footer-links">
             <a href="#" class="footer-link">도움말</a>

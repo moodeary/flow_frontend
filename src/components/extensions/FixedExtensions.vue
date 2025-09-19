@@ -46,15 +46,6 @@
         </div>
       </div>
     </div>
-
-    <ConfirmModal
-      v-model="confirmModal.show"
-      :title="confirmModal.title"
-      :message="confirmModal.message"
-      :variant="confirmModal.variant"
-      @confirm="confirmModal.onConfirm"
-      @cancel="confirmModal.show = false"
-    />
   </div>
 </template>
 
@@ -62,21 +53,12 @@
 import { ref, onMounted } from 'vue'
 import InputField from '@/components/common/InputField.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
-import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import ApiAxios from '@/api/ApiAxios'
 
 const fixedExtensions = ref([])
 const newFixedExtension = ref('')
 const fixedInputError = ref('')
 const loading = ref(false)
-
-const confirmModal = ref({
-  show: false,
-  title: '',
-  message: '',
-  variant: 'default',
-  onConfirm: () => {}
-})
 
 /**
  * 고정 확장자 목록을 서버에서 조회하는 함수
@@ -103,6 +85,7 @@ const fetchFixedExtensions = async () => {
     }
   } catch (error) {
     console.error('고정 확장자 조회 실패:', error)
+    alert('고정 확장자 목록을 불러오는데 실패했습니다.')
   } finally {
     loading.value = false
   }
@@ -115,6 +98,15 @@ const fetchFixedExtensions = async () => {
  * - 실패 시 데이터를 다시 불러와 동기화 보장
  */
 const updateFixedExtension = async (extension, isBlocked) => {
+  const action = isBlocked ? '차단' : '허용'
+  const confirmMessage = `"${extension}" 확장자를 ${action}하시겠습니까?`
+
+  if (!confirm(confirmMessage)) {
+    // 취소시 이전 상태로 되돌리기
+    fetchFixedExtensions()
+    return
+  }
+
   try {
     const response = await ApiAxios.put(`/api/extensions/fixed/${extension}`, null, {
       params: { isBlocked }
@@ -129,6 +121,7 @@ const updateFixedExtension = async (extension, isBlocked) => {
     }
   } catch (error) {
     console.error('고정 확장자 업데이트 실패:', error)
+    alert('고정 확장자 상태 변경에 실패했습니다.')
     // 실패 시 서버 데이터로 다시 동기화
     fetchFixedExtensions()
   }
@@ -195,40 +188,38 @@ const addFixedExtension = async () => {
     }
   } catch (error) {
     console.error('고정 확장자 추가 실패:', error)
+    alert('고정 확장자 추가에 실패했습니다.')
     fixedInputError.value = '추가에 실패했습니다.'
   }
 }
 
 /**
  * 고정 확장자를 삭제하는 함수
- * - 확인 모달을 표시하여 사용자에게 삭제 의사 확인
+ * - 확인 대화상자를 표시하여 사용자에게 삭제 의사 확인
  * - 확인 시 서버에 DELETE 요청 후 로컬 목록에서 제거
  */
-const removeFixedExtension = (id) => {
+const removeFixedExtension = async (id) => {
   const extension = fixedExtensions.value.find(ext => ext.id === id)
   if (!extension) return
 
-  // 삭제 확인 모달 표시
-  confirmModal.value = {
-    show: true,
-    title: '고정 확장자 삭제',
-    message: `"${extension.extension}" 고정 확장자를 삭제하시겠습니까?`,
-    variant: 'danger',
-    onConfirm: async () => {
-      try {
-        const response = await ApiAxios.delete(`/api/extensions/fixed/${id}`)
-        console.log('🗑️ [API] 고정확장자 삭제 응답:', response)
+  // 삭제 확인
+  if (!confirm(`"${extension.extension}" 고정 확장자를 삭제하시겠습니까?`)) {
+    return
+  }
 
-        if (response.data.success) {
-          // 서버 삭제 성공 시 로컬 목록에서 제거
-          fixedExtensions.value = fixedExtensions.value.filter(ext => ext.id !== id)
-        }
-      } catch (error) {
-        console.error('고정 확장자 삭제 실패:', error)
-      } finally {
-        confirmModal.value.show = false
-      }
+  try {
+    const response = await ApiAxios.delete(`/api/extensions/fixed/${id}`)
+    console.log('🗑️ [API] 고정확장자 삭제 응답:', response)
+
+    if (response.data.success) {
+      // 서버 삭제 성공 시 로컬 목록에서 제거
+      fixedExtensions.value = fixedExtensions.value.filter(ext => ext.id !== id)
+    } else {
+      alert('고정 확장자 삭제에 실패했습니다.')
     }
+  } catch (error) {
+    console.error('고정 확장자 삭제 실패:', error)
+    alert('고정 확장자 삭제에 실패했습니다.')
   }
 }
 

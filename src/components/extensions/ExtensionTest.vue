@@ -160,6 +160,11 @@ const unblockExtension = async () => {
     return
   }
 
+  const extension = testResult.value.extension
+  if (!confirm(`"${extension}" 확장자의 차단을 해제하시겠습니까?`)) {
+    return
+  }
+
   isUnblocking.value = true
 
   try {

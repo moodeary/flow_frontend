@@ -39,36 +39,18 @@
         </button>
       </div>
     </div>
-
-    <ConfirmModal
-      v-model="confirmModal.show"
-      :title="confirmModal.title"
-      :message="confirmModal.message"
-      :variant="confirmModal.variant"
-      @confirm="confirmModal.onConfirm"
-      @cancel="confirmModal.show = false"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import InputField from '@/components/common/InputField.vue'
-import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import ApiAxios from '@/api/ApiAxios'
 
 const customExtensions = ref([])
 const newCustomExtension = ref('')
 const customInputError = ref('')
 const loading = ref(false)
-
-const confirmModal = ref({
-  show: false,
-  title: '',
-  message: '',
-  variant: 'default',
-  onConfirm: () => {}
-})
 
 /**
  * 커스텀 확장자 목록을 서버에서 조회하는 함수
@@ -85,6 +67,7 @@ const fetchCustomExtensions = async () => {
     }
   } catch (error) {
     console.error('커스텀 확장자 조회 실패:', error)
+    alert('커스텀 확장자 목록을 불러오는데 실패했습니다.')
   } finally {
     loading.value = false
   }
@@ -147,40 +130,38 @@ const addCustomExtension = async () => {
     }
   } catch (error) {
     console.error('커스텀 확장자 추가 실패:', error)
+    alert('커스텀 확장자 추가에 실패했습니다.')
     customInputError.value = '추가에 실패했습니다.'
   }
 }
 
 /**
  * 커스텀 확장자를 삭제하는 함수
- * - 확인 모달을 표시하여 사용자에게 삭제 의사 확인
+ * - 확인 대화상자를 표시하여 사용자에게 삭제 의사 확인
  * - 확인 시 서버에 DELETE 요청 후 로컬 목록에서 제거
  */
-const removeCustomExtension = (id) => {
+const removeCustomExtension = async (id) => {
   const extension = customExtensions.value.find(ext => ext.id === id)
   if (!extension) return
 
-  // 삭제 확인 모달 표시
-  confirmModal.value = {
-    show: true,
-    title: '확장자 삭제',
-    message: `"${extension.extension}" 확장자를 삭제하시겠습니까?`,
-    variant: 'danger',
-    onConfirm: async () => {
-      try {
-        const response = await ApiAxios.delete(`/api/extensions/custom/${id}`)
-        console.log('🗑️ [API] 커스텀확장자 삭제 응답:', response)
+  // 삭제 확인
+  if (!confirm(`"${extension.extension}" 확장자를 삭제하시겠습니까?`)) {
+    return
+  }
 
-        if (response.data.success) {
-          // 서버 삭제 성공 시 로컬 목록에서 제거
-          customExtensions.value = customExtensions.value.filter(ext => ext.id !== id)
-        }
-      } catch (error) {
-        console.error('커스텀 확장자 삭제 실패:', error)
-      } finally {
-        confirmModal.value.show = false
-      }
+  try {
+    const response = await ApiAxios.delete(`/api/extensions/custom/${id}`)
+    console.log('🗑️ [API] 커스텀확장자 삭제 응답:', response)
+
+    if (response.data.success) {
+      // 서버 삭제 성공 시 로컬 목록에서 제거
+      customExtensions.value = customExtensions.value.filter(ext => ext.id !== id)
+    } else {
+      alert('커스텀 확장자 삭제에 실패했습니다.')
     }
+  } catch (error) {
+    console.error('커스텀 확장자 삭제 실패:', error)
+    alert('커스텀 확장자 삭제에 실패했습니다.')
   }
 }
 
