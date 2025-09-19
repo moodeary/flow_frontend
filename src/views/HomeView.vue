@@ -10,24 +10,45 @@
       <!-- 왼쪽: 고정/커스텀 확장자 섹션 (위아래 배치) -->
       <div class="left-column">
         <!-- 고정 확장자 섹션 -->
-        <FixedExtensions />
+        <FixedExtensions ref="fixedExtensionsRef" />
 
         <!-- 커스텀 확장자 섹션 -->
-        <CustomExtensions />
+        <CustomExtensions ref="customExtensionsRef" />
       </div>
 
       <!-- 오른쪽: 확장자 테스트 섹션 -->
       <div class="right-column">
-        <ExtensionTest />
+        <ExtensionTest @extension-unblocked="handleExtensionUnblocked" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import FixedExtensions from '@/components/extensions/FixedExtensions.vue'
 import CustomExtensions from '@/components/extensions/CustomExtensions.vue'
 import ExtensionTest from '@/components/extensions/ExtensionTest.vue'
+
+const fixedExtensionsRef = ref(null)
+const customExtensionsRef = ref(null)
+
+/**
+ * 확장자 차단 해제 후 목록 새로고침
+ */
+const handleExtensionUnblocked = (event) => {
+  console.log('🔄 확장자 차단 해제됨:', event)
+
+  // 고정 확장자가 해제된 경우 고정 확장자 목록 새로고침
+  if (event.type === 'fixed' && fixedExtensionsRef.value?.loadFixedExtensions) {
+    fixedExtensionsRef.value.loadFixedExtensions()
+  }
+
+  // 커스텀 확장자가 해제된 경우 커스텀 확장자 목록 새로고침
+  if (event.type === 'custom' && customExtensionsRef.value?.loadCustomExtensions) {
+    customExtensionsRef.value.loadCustomExtensions()
+  }
+}
 </script>
 
 <style scoped>

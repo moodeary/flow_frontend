@@ -236,6 +236,11 @@ const removeFixedExtension = (id) => {
 onMounted(() => {
   fetchFixedExtensions() // 고정 확장자 목록 조회
 })
+
+// 부모 컴포넌트에서 호출할 수 있는 메서드 expose
+defineExpose({
+  loadFixedExtensions: fetchFixedExtensions
+})
 </script>
 
 <style scoped>
@@ -303,7 +308,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  max-height: 120px;
+  max-height: 130px;
   overflow-y: auto;
   padding-right: 6px;
 }
@@ -327,7 +332,7 @@ onMounted(() => {
 }
 
 .fixed-extension-item {
-  padding: 8px;
+  padding: 6px 2px;
   background: var(--color-background);
   border-radius: 6px;
   border: 1px solid var(--color-border);

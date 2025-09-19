@@ -188,6 +188,11 @@ const removeCustomExtension = (id) => {
 onMounted(() => {
   fetchCustomExtensions() // 커스텀 확장자 목록 조회
 })
+
+// 부모 컴포넌트에서 호출할 수 있는 메서드 expose
+defineExpose({
+  loadCustomExtensions: fetchCustomExtensions
+})
 </script>
 
 <style scoped>
@@ -255,7 +260,7 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-height: 100px;
+  max-height: 160px;
   overflow-y: auto;
   padding-right: 6px;
 }

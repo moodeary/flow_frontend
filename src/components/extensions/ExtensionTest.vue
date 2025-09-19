@@ -7,7 +7,7 @@
       <InputField
         v-model="testExtension"
         placeholder="파일명 또는 확장자 입력 (예: document.pdf, exe, script.sh)"
-        :maxlength="100"
+        :maxlength="20"
         :error-message="testInputError"
         @enter="checkExtension"
       />
@@ -32,6 +32,15 @@
         <p class="result-extension">검사한 확장자: {{ testResult.filename.includes('.') ? '.' + testResult.extension : testResult.extension }}</p>
         <p class="result-message">{{ testResult.message }}</p>
       </div>
+      <div v-if="testResult.isBlocked" class="result-actions">
+        <button
+          class="unblock-btn"
+          :disabled="isUnblocking"
+          @click="unblockExtension"
+        >
+          {{ isUnblocking ? '해제 중...' : '차단 해제' }}
+        </button>
+      </div>
     </div>
 
   </div>
@@ -42,9 +51,12 @@ import { ref } from 'vue'
 import InputField from '@/components/common/InputField.vue'
 import ApiAxios from '@/api/ApiAxios.js'
 
+const emit = defineEmits(['extension-unblocked'])
+
 const testExtension = ref('')
 const testInputError = ref('')
 const isChecking = ref(false)
+const isUnblocking = ref(false)
 const testResult = ref(null)
 
 /**
@@ -135,6 +147,76 @@ const checkExtension = async () => {
     testInputError.value = '테스트에 실패했습니다. 서버를 확인해주세요.'
   } finally {
     isChecking.value = false
+  }
+}
+
+/**
+ * 차단된 확장자를 허용하는 함수
+ * - 커스텀 확장자: 삭제
+ * - 고정 확장자: isBlocked를 false로 업데이트
+ */
+const unblockExtension = async () => {
+  if (!testResult.value || !testResult.value.extension) {
+    return
+  }
+
+  isUnblocking.value = true
+
+  try {
+    const extension = testResult.value.extension
+
+    // 먼저 확장자가 고정인지 커스텀인지 확인
+    const typeResponse = await ApiAxios.get(`/api/extensions/type/${extension}`)
+
+    if (!typeResponse.data.success) {
+      alert('확장자 타입 확인에 실패했습니다.')
+      return
+    }
+
+    const extensionType = typeResponse.data.data // 'fixed' 또는 'custom'
+    let response
+
+    if (extensionType === 'custom') {
+      // 커스텀 확장자: 삭제
+      response = await ApiAxios.delete(`/api/extensions/custom/extension/${extension}`)
+
+      if (response.data.success) {
+        testResult.value.isBlocked = false
+        testResult.value.message = '커스텀 확장자가 삭제되어 차단이 해제되었습니다.'
+        console.log('✅ 커스텀 확장자 삭제 완료:', extension)
+
+        // 부모 컴포넌트에 확장자 목록 새로고침 요청
+        emit('extension-unblocked', { extension, type: 'custom' })
+      }
+    } else if (extensionType === 'fixed') {
+      // 고정 확장자: isBlocked를 false로 업데이트
+      response = await ApiAxios.put('/api/extensions/fixed', {
+        extension: extension,
+        isBlocked: false
+      })
+
+      if (response.data.success) {
+        testResult.value.isBlocked = false
+        testResult.value.message = '고정 확장자의 차단이 해제되었습니다.'
+        console.log('✅ 고정 확장자 차단 해제 완료:', extension)
+
+        // 부모 컴포넌트에 확장자 목록 새로고침 요청
+        emit('extension-unblocked', { extension, type: 'fixed' })
+      }
+    } else {
+      alert('알 수 없는 확장자 타입입니다.')
+      return
+    }
+
+    if (!response.data.success) {
+      console.error('차단 해제 실패:', response.data.message)
+      alert(response.data.message || '차단 해제에 실패했습니다.')
+    }
+  } catch (error) {
+    console.error('차단 해제 요청 실패:', error)
+    alert('차단 해제에 실패했습니다. 서버를 확인해주세요.')
+  } finally {
+    isUnblocking.value = false
   }
 }
 
@@ -255,6 +337,38 @@ const checkExtension = async () => {
   font-size: 11px;
   margin: 0;
   color: var(--color-foreground-secondary);
+}
+
+.result-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.unblock-btn {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #16a34a, #22c55e, #15803d);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 60px;
+  height: 24px;
+}
+
+.unblock-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #15803d, #16a34a, #166534);
+  transform: translateY(-1px);
+}
+
+.unblock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 

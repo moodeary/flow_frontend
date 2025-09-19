@@ -1,216 +1,307 @@
 <template>
   <div class="test-container">
-    <div class="header">
-      <h1 class="title">확장자 차단 테스트</h1>
-      <p class="description">파일 확장자가 차단되는지 테스트할 수 있습니다.</p>
-    </div>
+
 
     <div class="test-section">
-      <h2 class="section-title">파일 확장자 테스트</h2>
-      <p class="section-desc">파일명 또는 확장자를 입력하여 차단 상태를 확인하세요. (.이 없으면 전체를 확장자로 검사)</p>
+      <h2 class="section-title">파일 업로드 테스트</h2>
+      <p class="section-desc">실제 파일을 업로드하여 확장자 차단 기능을 테스트하세요.</p>
 
-      <div class="test-input-group">
-        <InputField
-          v-model="testExtension"
-          placeholder="파일명 또는 확장자 입력 (예: document.pdf, exe, script.sh)"
-          :maxlength="100"
-          :error-message="testInputError"
-          @enter="checkExtension"
-        />
-        <button
-          class="test-btn"
-          :disabled="!testExtension.trim() || isChecking"
-          @click="checkExtension"
-        >
-          {{ isChecking ? '확인 중...' : '테스트' }}
-        </button>
+      <!-- 파일 업로드 영역 -->
+      <div class="upload-area"
+           :class="{ 'drag-over': isDragOver }"
+           @drop="handleDrop"
+           @dragover.prevent
+           @dragenter="isDragOver = true"
+           @dragleave="isDragOver = false"
+           @click="triggerFileInput">
+        <input ref="fileInput" type="file" multiple style="display: none" @change="handleFileSelect">
+        <div class="upload-content">
+          <div class="upload-icon">📁</div>
+          <p class="upload-text">파일을 드래그하거나 클릭하여 선택하세요</p>
+          <p class="upload-hint">여러 파일 동시 선택 가능 (최대 10MB)</p>
+        </div>
       </div>
 
-      <div v-if="testResult" class="test-result" :class="{ 'blocked': testResult.isBlocked, 'allowed': !testResult.isBlocked }">
-        <div class="result-icon">
-          {{ testResult.isBlocked ? '🚫' : '✅' }}
-        </div>
-        <div class="result-content">
-          <h3 class="result-title">
-            {{ testResult.isBlocked ? '차단됨' : '허용됨' }}
-          </h3>
-          <p class="result-filename">입력값: {{ testResult.filename }}</p>
-          <p class="result-extension">검사한 확장자: {{ testResult.filename.includes('.') ? '.' + testResult.extension : testResult.extension }}</p>
-          <p class="result-message">{{ testResult.message }}</p>
+      <!-- 업로드 진행 상황 -->
+      <div v-if="uploadingFiles.length > 0" class="upload-progress">
+        <h3>업로드 진행 상황</h3>
+        <div v-for="file in uploadingFiles" :key="file.id" class="upload-item">
+          <span class="upload-filename">{{ file.name }}</span>
+          <div class="upload-status" :class="file.status">
+            {{ file.statusText }}
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="history-section">
-      <h2 class="section-title">테스트 이력</h2>
-      <p class="section-desc">최근 테스트한 확장자들의 결과입니다.</p>
 
-      <div v-if="testHistory.length === 0" class="empty">테스트 이력이 없습니다.</div>
-      <div v-else class="history-list">
-        <div
-          v-for="(item, index) in testHistory"
-          :key="index"
-          class="history-item"
-          :class="{ 'blocked': item.isBlocked, 'allowed': !item.isBlocked }"
-        >
-          <div class="history-file-info">
-            <div class="history-filename">{{ item.filename }}</div>
-            <div class="history-extension">{{ item.filename.includes('.') ? '.' + item.extension : item.extension }}</div>
+    <div class="files-section">
+      <h2 class="section-title">업로드된 파일 목록</h2>
+      <p class="section-desc">업로드된 파일들을 관리할 수 있습니다.</p>
+
+      <div v-if="isLoadingFiles" class="loading">파일 목록을 불러오는 중...</div>
+      <div v-else-if="files.length === 0" class="empty">업로드된 파일이 없습니다.</div>
+      <div v-else class="files-table">
+        <div class="table-header">
+          <span>파일명</span>
+          <span>크기</span>
+          <span>업로드일</span>
+          <span>작업</span>
+        </div>
+        <div v-for="file in files" :key="file.id" class="table-row">
+          <div class="file-info">
+            <div class="file-name">{{ file.originalFilename }}</div>
+            <div class="file-extension">{{ getFileExtension(file.originalFilename) }}</div>
           </div>
-          <div class="history-status">
-            <span class="status-icon">{{ item.isBlocked ? '🚫' : '✅' }}</span>
-            <span class="status-text">{{ item.isBlocked ? '차단됨' : '허용됨' }}</span>
+          <div class="file-size">{{ formatFileSize(file.fileSize) }}</div>
+          <div class="file-date">{{ formatDate(file.createdAt) }}</div>
+          <div class="file-actions">
+            <button class="action-btn download" @click="downloadFile(file)" title="다운로드">
+              📥
+            </button>
+            <button class="action-btn delete" @click="deleteFile(file)" title="삭제">
+              🗑️
+            </button>
           </div>
-          <div class="history-time">{{ formatTime(item.timestamp) }}</div>
         </div>
       </div>
 
-      <button
-        v-if="testHistory.length > 0"
-        class="clear-btn"
-        @click="clearHistory"
-      >
-        이력 지우기
+      <button v-if="files.length > 0" class="refresh-btn" @click="loadFiles">
+        새로고침
       </button>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import InputField from '@/components/common/InputField.vue'
+import { ref, onMounted } from 'vue'
 import ApiAxios from '@/api/ApiAxios.js'
 
-const testExtension = ref('')
-const testInputError = ref('')
-const isChecking = ref(false)
-const testResult = ref(null)
-const testHistory = ref([])
+// 파일 업로드 관련
+const fileInput = ref(null)
+const isDragOver = ref(false)
+const uploadingFiles = ref([])
+const files = ref([])
+const isLoadingFiles = ref(false)
+
+
+// 파일 업로드/다운로드 관련 함수들
 
 /**
- * 파일명에서 확장자를 추출하는 함수
- * - 마지막 '.' 이후의 문자열을 확장자로 추출
- * - '.'이 없으면 전체 파일명을 확장자로 처리
- * - 빈 문자열이면 빈 문자열 반환
+ * 파일 입력 창을 트리거하는 함수
  */
-const extractExtension = (filename) => {
-  if (!filename || typeof filename !== 'string') {
-    return ''
-  }
-
-  const trimmed = filename.trim()
-  if (!trimmed) {
-    return ''
-  }
-
-  const lastDotIndex = trimmed.lastIndexOf('.')
-
-  // '.'이 없으면 전체 파일명을 확장자로 처리
-  if (lastDotIndex === -1) {
-    return trimmed.toLowerCase()
-  }
-
-  // 마지막이 '.'인 경우 빈 문자열 반환
-  if (lastDotIndex === trimmed.length - 1) {
-    return ''
-  }
-
-  return trimmed.substring(lastDotIndex + 1).toLowerCase()
+const triggerFileInput = () => {
+  fileInput.value?.click()
 }
 
 /**
- * 입력된 파일명에서 확장자를 추출하여 차단 상태를 확인하는 함수
- * - 입력값 유효성 검증 후 서버에 확장자 체크 요청
- * - 테스트 결과를 화면에 표시하고 이력에 추가
- * - 고정/커스텀 확장자 여부와 차단 상태를 종합적으로 확인
+ * 드래그 앤 드롭으로 파일이 떨어졌을 때 처리
  */
-const checkExtension = async () => {
-  const input = testExtension.value.trim()
+const handleDrop = (event) => {
+  event.preventDefault()
+  isDragOver.value = false
 
-  // 입력값 유효성 검증
-  if (!input) {
-    testInputError.value = '파일명을 입력해주세요.'
-    return
+  const droppedFiles = Array.from(event.dataTransfer.files)
+  processFiles(droppedFiles)
+}
+
+/**
+ * 파일 선택으로 파일이 선택되었을 때 처리
+ */
+const handleFileSelect = (event) => {
+  const selectedFiles = Array.from(event.target.files)
+  processFiles(selectedFiles)
+  // 파일 입력 초기화
+  event.target.value = ''
+}
+
+/**
+ * 선택된 파일들을 처리하는 함수
+ */
+const processFiles = async (fileList) => {
+  for (const file of fileList) {
+    if (file.size > 10 * 1024 * 1024) { // 10MB 제한
+      alert(`${file.name}은 10MB를 초과합니다.`)
+      continue
+    }
+
+    // 확장자 체크
+    const extension = getFileExtension(file.name)
+    const isBlocked = await checkFileExtension(extension)
+
+    if (isBlocked) {
+      alert(`${file.name}의 확장자(${extension})는 차단된 확장자입니다.`)
+      continue
+    }
+
+    // 업로드 진행
+    await uploadFile(file)
+  }
+}
+
+/**
+ * 파일 확장자 체크
+ */
+const checkFileExtension = async (extension) => {
+  try {
+    const response = await ApiAxios.get(`/api/extensions/check/${extension}`)
+    return response.data.data // 차단 여부
+  } catch (error) {
+    console.error('확장자 체크 실패:', error)
+    return false
+  }
+}
+
+/**
+ * 파일 업로드
+ */
+const uploadFile = async (file) => {
+  const uploadItem = {
+    id: Date.now() + Math.random(),
+    name: file.name,
+    status: 'uploading',
+    statusText: '업로드 중...'
   }
 
-  // 파일명에서 확장자 추출
-  const extension = extractExtension(input)
-
-  if (!extension) {
-    testInputError.value = '올바른 파일명을 입력해주세요.'
-    return
-  }
-
-  if (extension.length > 20) {
-    testInputError.value = '확장자는 최대 20자까지 가능합니다.'
-    return
-  }
-
-  // 검사 시작 - 상태 초기화
-  testInputError.value = ''
-  isChecking.value = true
-  testResult.value = null
+  uploadingFiles.value.push(uploadItem)
 
   try {
-    // 서버에 확장자 차단 상태 확인 요청
-    const response = await ApiAxios.get(`/api/extensions/check/${extension}`)
-    console.log('🔍 [API] 확장자 체크 응답:', response)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await ApiAxios.post('/api/files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
     if (response.data.success) {
-      // 테스트 결과 객체 생성
-      const result = {
-        filename: input, // 원본 파일명
-        extension,       // 추출된 확장자
-        isBlocked: response.data.data, // 차단 여부 (boolean)
-        message: response.data.message, // 서버에서 제공하는 메시지
-        timestamp: new Date() // 테스트 실행 시간
-      }
+      uploadItem.status = 'success'
+      uploadItem.statusText = '업로드 완료'
 
-      testResult.value = result
-
-      // 이미 테스트한 파일명이 있으면 기존 항목 제거 후 최신 결과를 맨 앞에 추가
-      const existingIndex = testHistory.value.findIndex(item => item.filename === input)
-      if (existingIndex !== -1) {
-        testHistory.value.splice(existingIndex, 1)
-      }
-
-      testHistory.value.unshift(result) // 최신 결과를 맨 앞에 추가
-
-      // 테스트 이력을 최대 10개까지만 유지
-      if (testHistory.value.length > 10) {
-        testHistory.value = testHistory.value.slice(0, 10)
-      }
+      // 파일 목록 새로고침
+      await loadFiles()
     } else {
-      testInputError.value = response.data.message || '테스트에 실패했습니다.'
+      uploadItem.status = 'error'
+      uploadItem.statusText = '업로드 실패'
     }
   } catch (error) {
-    console.error('확장자 테스트 실패:', error)
-    testInputError.value = '테스트에 실패했습니다. 서버를 확인해주세요.'
+    console.error('파일 업로드 실패:', error)
+    uploadItem.status = 'error'
+    uploadItem.statusText = '업로드 실패'
+  }
+
+  // 3초 후 업로드 진행 목록에서 제거
+  setTimeout(() => {
+    const index = uploadingFiles.value.findIndex(item => item.id === uploadItem.id)
+    if (index !== -1) {
+      uploadingFiles.value.splice(index, 1)
+    }
+  }, 3000)
+}
+
+/**
+ * 파일 목록 조회
+ */
+const loadFiles = async () => {
+  isLoadingFiles.value = true
+  try {
+    const response = await ApiAxios.get('/api/files')
+    if (response.data.success) {
+      files.value = response.data.data
+    }
+  } catch (error) {
+    console.error('파일 목록 조회 실패:', error)
   } finally {
-    isChecking.value = false
+    isLoadingFiles.value = false
   }
 }
 
 /**
- * 테스트 이력을 모두 지우는 함수
- * - 사용자가 '이력 지우기' 버튼을 클릭했을 때 호출
+ * 파일 다운로드
  */
-const clearHistory = () => {
-  testHistory.value = []
+const downloadFile = async (file) => {
+  try {
+    const response = await ApiAxios.get(`/api/files/${file.id}/download`, {
+      responseType: 'blob'
+    })
+
+    // Blob URL 생성 및 다운로드
+    const blob = new Blob([response.data])
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.originalFilename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('파일 다운로드 실패:', error)
+    alert('파일 다운로드에 실패했습니다.')
+  }
 }
 
 /**
- * 타임스탬프를 한국어 시간 형식으로 포맷하는 함수
- * - 테스트 이력에서 실행 시간을 표시할 때 사용
- * - 시:분:초 형식으로 표시 (예: 14:30:25)
+ * 파일 삭제
  */
-const formatTime = (timestamp) => {
-  return new Intl.DateTimeFormat('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).format(timestamp)
+const deleteFile = async (file) => {
+  if (!confirm(`${file.originalFilename}을 삭제하시겠습니까?`)) {
+    return
+  }
+
+  try {
+    const response = await ApiAxios.delete(`/api/files/${file.id}`)
+    if (response.data.success) {
+      await loadFiles() // 목록 새로고침
+    } else {
+      alert('파일 삭제에 실패했습니다.')
+    }
+  } catch (error) {
+    console.error('파일 삭제 실패:', error)
+    alert('파일 삭제에 실패했습니다.')
+  }
 }
+
+/**
+ * 파일 확장자 추출
+ */
+const getFileExtension = (filename) => {
+  const lastDotIndex = filename.lastIndexOf('.')
+  if (lastDotIndex === -1) return ''
+  return filename.substring(lastDotIndex + 1).toLowerCase()
+}
+
+/**
+ * 파일 크기 포맷팅
+ */
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+/**
+ * 날짜 포맷팅
+ */
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+// 컴포넌트 마운트 시 파일 목록 로드
+onMounted(() => {
+  loadFiles()
+})
 </script>
 
 <style scoped>
@@ -265,99 +356,6 @@ const formatTime = (timestamp) => {
   margin: 0 0 24px 0;
 }
 
-.test-input-group {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.test-btn {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #6b7280, #9ca3af, #4b5563);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  min-width: 100px;
-}
-
-.test-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4b5563, #6b7280, #374151);
-  transform: translateY(-1px);
-}
-
-.test-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.test-result {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 24px;
-  transition: all 0.3s ease;
-}
-
-.test-result.blocked {
-  background: linear-gradient(135deg, #fef2f2, #fee2e2);
-  border: 1px solid #fecaca;
-}
-
-.test-result.allowed {
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border: 1px solid #bbf7d0;
-}
-
-.result-icon {
-  font-size: 48px;
-  flex-shrink: 0;
-}
-
-.result-content {
-  flex: 1;
-}
-
-.result-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.test-result.blocked .result-title {
-  color: #dc2626;
-}
-
-.test-result.allowed .result-title {
-  color: #16a34a;
-}
-
-.result-filename {
-  font-size: 14px;
-  margin: 0 0 4px 0;
-  color: var(--color-foreground);
-  font-weight: 500;
-}
-
-.result-extension {
-  font-size: 14px;
-  margin: 0 0 8px 0;
-  color: var(--color-foreground-secondary);
-  font-family: monospace;
-}
-
-.result-message {
-  font-size: 16px;
-  margin: 0;
-  color: var(--color-foreground-secondary);
-}
-
 .empty {
   text-align: center;
   color: var(--color-foreground-secondary);
@@ -365,100 +363,199 @@ const formatTime = (timestamp) => {
   font-style: italic;
 }
 
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* 파일 업로드/다운로드 관련 스타일 */
+.upload-area {
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
   margin-bottom: 24px;
-  max-height: 500px;
-  overflow-y: auto;
-  padding-right: 8px;
 }
 
-.history-list::-webkit-scrollbar {
-  width: 6px;
+.upload-area:hover, .upload-area.drag-over {
+  border-color: #6b7280;
+  background: var(--color-background);
 }
 
-.history-list::-webkit-scrollbar-track {
-  background: var(--color-background-secondary);
-  border-radius: 3px;
+.upload-content {
+  pointer-events: none;
 }
 
-.history-list::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
 }
 
-.history-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-foreground-tertiary);
+.upload-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0 0 8px 0;
 }
 
-.history-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
+.upload-hint {
+  font-size: 14px;
+  color: var(--color-foreground-secondary);
+  margin: 0;
+}
+
+.upload-progress {
   background: var(--color-background);
   border-radius: 8px;
-  border: 1px solid var(--color-border);
-  transition: all 0.2s;
+  padding: 16px;
+  margin-bottom: 24px;
 }
 
-.history-item.blocked {
-  border-left: 4px solid #dc2626;
-}
-
-.history-item.allowed {
-  border-left: 4px solid #16a34a;
-}
-
-.history-file-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.history-filename {
-  font-weight: 600;
+.upload-progress h3 {
   font-size: 16px;
+  margin: 0 0 12px 0;
   color: var(--color-foreground);
 }
 
-.history-extension {
+.upload-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.upload-item:last-child {
+  border-bottom: none;
+}
+
+.upload-filename {
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.upload-status {
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.upload-status.uploading {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.upload-status.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.upload-status.error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.files-section {
+  background: var(--color-background-secondary);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  border: 1px solid var(--color-border);
+}
+
+.files-table {
+  background: var(--color-background);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 100px 150px 80px;
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-background-tertiary);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-foreground);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 100px 150px 80px;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.table-row:hover {
+  background: var(--color-background-secondary);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-name {
+  font-weight: 500;
+  color: var(--color-foreground);
+  font-size: 14px;
+}
+
+.file-extension {
   font-size: 12px;
   color: var(--color-foreground-secondary);
   font-family: monospace;
 }
 
-.history-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-icon {
-  font-size: 16px;
-}
-
-.status-text {
+.file-size {
   font-size: 14px;
-  font-weight: 500;
+  color: var(--color-foreground-secondary);
+  text-align: right;
 }
 
-.history-item.blocked .status-text {
-  color: #dc2626;
-}
-
-.history-item.allowed .status-text {
-  color: #16a34a;
-}
-
-.history-time {
+.file-date {
   font-size: 12px;
-  color: var(--color-foreground-tertiary);
+  color: var(--color-foreground-secondary);
 }
 
-.clear-btn {
+.file-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: var(--color-background-secondary);
+  transform: scale(1.1);
+}
+
+.action-btn.download:hover {
+  background: #dcfce7;
+}
+
+.action-btn.delete:hover {
+  background: #fee2e2;
+}
+
+.refresh-btn {
   padding: 8px 16px;
   background: var(--color-background);
   color: var(--color-foreground-secondary);
@@ -467,11 +564,19 @@ const formatTime = (timestamp) => {
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  margin-top: 16px;
 }
 
-.clear-btn:hover {
+.refresh-btn:hover {
   background: var(--color-background-tertiary);
   color: var(--color-foreground);
+}
+
+.loading {
+  text-align: center;
+  color: var(--color-foreground-secondary);
+  padding: 24px;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {
@@ -483,39 +588,55 @@ const formatTime = (timestamp) => {
     font-size: 24px;
   }
 
-  .test-section, .history-section {
+  .test-section, .files-section {
     padding: 24px;
     margin-bottom: 24px;
   }
 
-  .test-input-group {
-    flex-direction: column;
+  .upload-area {
+    padding: 32px 16px;
   }
 
-  .test-result {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
+  .upload-icon {
+    font-size: 36px;
   }
 
-  .history-item {
-    flex-direction: column;
-    align-items: flex-start;
+  .upload-text {
+    font-size: 16px;
+  }
+
+  .table-header, .table-row {
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
-  .history-file-info {
-    order: 1;
+  .table-header {
+    display: none;
   }
 
-  .history-status {
-    order: -1;
-    align-self: flex-end;
+  .table-row {
+    padding: 16px;
+    display: block;
   }
 
-  .history-time {
-    order: 2;
-    align-self: flex-start;
+  .file-info {
+    margin-bottom: 8px;
+  }
+
+  .file-size, .file-date {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .file-actions {
+    justify-content: flex-start;
+    margin-top: 8px;
+  }
+
+  .upload-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 </style>

@@ -26,7 +26,7 @@
         </RouterLink>
         <RouterLink to="/test" class="tab-item">
           <span class="tab-icon">📋</span>
-          <span class="tab-text">테스트 실험</span>
+          <span class="tab-text">파일 업로드</span>
         </RouterLink>
       </div>
     </nav>
@@ -255,7 +255,7 @@ const modalStore = useModalStore()
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 16px 24px;
+  padding: 5px 24px;
   text-decoration: none;
   color: #666;
   border-bottom: 2px solid transparent;
@@ -277,7 +277,7 @@ const modalStore = useModalStore()
 }
 
 .tab-icon {
-  font-size: 20px;
+  font-size: 15px;
   filter: grayscale(0.3);
   transition: all 0.3s ease;
 }
@@ -288,7 +288,7 @@ const modalStore = useModalStore()
 }
 
 .tab-text {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
