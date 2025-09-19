@@ -1,10 +1,14 @@
 <template>
-  <div class="test-container">
+  <div class="upload-container">
+    <div class="header">
+      <h1 class="title">파일 업로드 및 관리</h1>
+      <p class="description">파일을 업로드하고 다운로드할 수 있습니다.</p>
+    </div>
 
-
-    <div class="test-section">
-      <h2 class="section-title">파일 업로드 테스트</h2>
-      <p class="section-desc">실제 파일을 업로드하여 확장자 차단 기능을 테스트하세요.</p>
+    <div class="main-content">
+      <div class="upload-section">
+        <h2 class="section-title">파일 업로드</h2>
+        <p class="section-desc">파일을 드래그하거나 클릭하여 업로드하세요. 확장자 차단 기능이 적용됩니다.</p>
 
       <!-- 파일 업로드 영역 -->
       <div class="upload-area"
@@ -31,13 +35,12 @@
             {{ file.statusText }}
           </div>
         </div>
+        </div>
       </div>
-    </div>
 
-
-    <div class="files-section">
-      <h2 class="section-title">업로드된 파일 목록</h2>
-      <p class="section-desc">업로드된 파일들을 관리할 수 있습니다.</p>
+      <div class="files-section">
+        <h2 class="section-title">업로드된 파일 목록</h2>
+        <p class="section-desc">업로드된 파일들을 다운로드하거나 삭제할 수 있습니다.</p>
 
       <div v-if="isLoadingFiles" class="loading">파일 목록을 불러오는 중...</div>
       <div v-else-if="files.length === 0" class="empty">업로드된 파일이 없습니다.</div>
@@ -68,9 +71,9 @@
 
       <button v-if="files.length > 0" class="refresh-btn" @click="loadFiles">
         새로고침
-      </button>
+        </button>
+      </div>
     </div>
-
   </div>
 </template>
 
@@ -305,73 +308,79 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.test-container {
-  max-width: 800px;
+.upload-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
-  min-height: 100vh;
-  overflow-y: auto;
+  padding: 16px 12px;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 20px;
 }
 
 .title {
-  font-size: 32px;
+  font-size: 18px;
   font-weight: 700;
   background: linear-gradient(135deg, #374151, #6b7280, #9ca3af);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin: 0 0 16px 0;
   letter-spacing: -1px;
+  margin: 0 0 8px 0;
 }
 
 .description {
-  font-size: 18px;
+  font-size: 12px;
   color: var(--color-foreground-secondary);
   margin: 0;
 }
 
-.test-section, .history-section {
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.upload-section, .files-section {
   background: var(--color-background-secondary);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
   border: 1px solid var(--color-border);
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-foreground);
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .section-desc {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground-secondary);
-  margin: 0 0 24px 0;
+  margin: 0 0 12px 0;
 }
 
 .empty {
   text-align: center;
   color: var(--color-foreground-secondary);
-  padding: 24px;
+  padding: 12px;
   font-style: italic;
+  font-size: 10px;
 }
 
 /* 파일 업로드/다운로드 관련 스타일 */
 .upload-area {
   border: 2px dashed var(--color-border);
-  border-radius: 12px;
-  padding: 48px 24px;
+  border-radius: 8px;
+  padding: 24px 16px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .upload-area:hover, .upload-area.drag-over {
@@ -384,33 +393,33 @@ onMounted(() => {
 }
 
 .upload-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 32px;
+  margin-bottom: 8px;
 }
 
 .upload-text {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-foreground);
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .upload-hint {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground-secondary);
   margin: 0;
 }
 
 .upload-progress {
   background: var(--color-background);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 12px;
 }
 
 .upload-progress h3 {
-  font-size: 16px;
-  margin: 0 0 12px 0;
+  font-size: 12px;
+  margin: 0 0 6px 0;
   color: var(--color-foreground);
 }
 
@@ -418,7 +427,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 4px 0;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -429,11 +438,12 @@ onMounted(() => {
 .upload-filename {
   font-weight: 500;
   color: var(--color-foreground);
+  font-size: 10px;
 }
 
 .upload-status {
-  font-size: 14px;
-  padding: 4px 8px;
+  font-size: 10px;
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
@@ -452,38 +462,31 @@ onMounted(() => {
   color: #dc2626;
 }
 
-.files-section {
-  background: var(--color-background-secondary);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
-  border: 1px solid var(--color-border);
-}
 
 .files-table {
   background: var(--color-background);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--color-border);
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 1fr 100px 150px 80px;
-  gap: 16px;
-  padding: 16px;
+  grid-template-columns: 1fr 80px 120px 60px;
+  gap: 8px;
+  padding: 8px;
   background: var(--color-background-tertiary);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground);
   border-bottom: 1px solid var(--color-border);
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 100px 150px 80px;
-  gap: 16px;
-  padding: 16px;
+  grid-template-columns: 1fr 80px 120px 60px;
+  gap: 8px;
+  padding: 8px;
   border-bottom: 1px solid var(--color-border);
   align-items: center;
   transition: background-color 0.2s;
@@ -500,29 +503,29 @@ onMounted(() => {
 .file-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .file-name {
   font-weight: 500;
   color: var(--color-foreground);
-  font-size: 14px;
+  font-size: 10px;
 }
 
 .file-extension {
-  font-size: 12px;
+  font-size: 8px;
   color: var(--color-foreground-secondary);
   font-family: monospace;
 }
 
 .file-size {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--color-foreground-secondary);
   text-align: right;
 }
 
 .file-date {
-  font-size: 12px;
+  font-size: 9px;
   color: var(--color-foreground-secondary);
 }
 
@@ -535,9 +538,9 @@ onMounted(() => {
 .action-btn {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 12px;
   cursor: pointer;
-  padding: 4px;
+  padding: 2px;
   border-radius: 4px;
   transition: all 0.2s;
 }
@@ -556,15 +559,15 @@ onMounted(() => {
 }
 
 .refresh-btn {
-  padding: 8px 16px;
+  padding: 4px 8px;
   background: var(--color-background);
   color: var(--color-foreground-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 4px;
+  font-size: 10px;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .refresh-btn:hover {
@@ -575,39 +578,45 @@ onMounted(() => {
 .loading {
   text-align: center;
   color: var(--color-foreground-secondary);
-  padding: 24px;
+  padding: 12px;
   font-style: italic;
+  font-size: 10px;
 }
 
 @media (max-width: 768px) {
-  .test-container {
-    padding: 24px 16px;
+  .upload-container {
+    padding: 16px 12px;
   }
 
   .title {
-    font-size: 24px;
+    font-size: 16px;
   }
 
-  .test-section, .files-section {
-    padding: 24px;
-    margin-bottom: 24px;
+  .main-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .upload-section, .files-section {
+    padding: 12px;
+    margin-bottom: 12px;
   }
 
   .upload-area {
-    padding: 32px 16px;
+    padding: 16px 12px;
   }
 
   .upload-icon {
-    font-size: 36px;
+    font-size: 24px;
   }
 
   .upload-text {
-    font-size: 16px;
+    font-size: 12px;
   }
 
   .table-header, .table-row {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 4px;
   }
 
   .table-header {
@@ -615,28 +624,28 @@ onMounted(() => {
   }
 
   .table-row {
-    padding: 16px;
+    padding: 8px;
     display: block;
   }
 
   .file-info {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .file-size, .file-date {
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 9px;
+    margin-bottom: 2px;
   }
 
   .file-actions {
     justify-content: flex-start;
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   .upload-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 4px;
   }
 }
 </style>
